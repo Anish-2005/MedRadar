@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -162,10 +163,13 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-          <img
+          <Image
             className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full"
             src="https://images.unsplash.com/photo-1551076805-e1869033e561?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80"
             alt="Hospital staff working"
+            width={1000}
+            height={800}
+            priority
           />
         </div>
       </div>
@@ -290,7 +294,7 @@ export default function LandingPage() {
                   </div>
                   <blockquote className="mt-6">
                     <p className="text-base text-gray-600">
-                      "This system helped us avoid oxygen shortages during the second wave. The predictive alerts gave us enough time to arrange supplies."
+                      &ldquo;This system helped us avoid oxygen shortages during the second wave. The predictive alerts gave us enough time to arrange supplies.&rdquo;
                     </p>
                     <footer className="mt-4">
                       <p className="text-base font-medium text-gray-900">Dr. Rajesh Verma</p>
@@ -312,7 +316,7 @@ export default function LandingPage() {
                   </div>
                   <blockquote className="mt-6">
                     <p className="text-base text-gray-600">
-                      "The bed management feature reduced our patient transfer time by 40%. Now we can see availability at a glance."
+                      &ldquo;The bed management feature reduced our patient transfer time by 40%. Now we can see availability at a glance.&rdquo;
                     </p>
                     <footer className="mt-4">
                       <p className="text-base font-medium text-gray-900">Sister Anjali Mehta</p>
@@ -334,7 +338,7 @@ export default function LandingPage() {
                   </div>
                   <blockquote className="mt-6">
                     <p className="text-base text-gray-600">
-                      "Automated government reporting saved us countless hours of paperwork. The system integrates seamlessly with our existing workflow."
+                      &ldquo;Automated government reporting saved us countless hours of paperwork. The system integrates seamlessly with our existing workflow.&rdquo;
                     </p>
                     <footer className="mt-4">
                       <p className="text-base font-medium text-gray-900">Administrator Vivek Sharma</p>
