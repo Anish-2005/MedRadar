@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
-import { FiAlertTriangle, FiPlus, FiRefreshCw, FiDownload, FiUpload, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiAlertTriangle, FiPlus, FiRefreshCw, FiDownload, FiUpload, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp, FiSearch } from 'react-icons/fi';
 
 export default function Resources() {
     const [activeTab, setActiveTab] = useState('beds');
     const [isLoading, setIsLoading] = useState(true);
     const [darkMode, setDarkMode] = useState(false);
     const [expandedSection, setExpandedSection] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
     const router = useRouter();
 
     // Mock data - replace with real API calls
@@ -20,6 +21,21 @@ export default function Resources() {
         }, 1000);
 
         return () => clearTimeout(timer);
+    }, []);
+
+    // Sync with system dark mode preference so themes feel consistent with dashboard
+    useEffect(() => {
+        if (typeof window === 'undefined' || !window.matchMedia) return;
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        setDarkMode(mq.matches);
+        const handler = (e) => setDarkMode(e.matches);
+        // use addEventListener when available
+        if (mq.addEventListener) mq.addEventListener('change', handler);
+        else mq.addListener(handler);
+        return () => {
+            if (mq.removeEventListener) mq.removeEventListener('change', handler);
+            else mq.removeListener(handler);
+        };
     }, []);
 
     const resourceData = {
@@ -145,6 +161,7 @@ export default function Resources() {
         setIsLoading(true);
         setTimeout(() => {
             setIsLoading(false);
+            setSearchTerm('');
         }, 800);
     };
 
@@ -161,6 +178,9 @@ export default function Resources() {
     const renderTabContent = () => {
         switch (activeTab) {
             case 'beds':
+                // filter by search term (matches ward)
+                const filteredBeds = resourceData.beds.details.filter((w) => w.ward.toLowerCase().includes(searchTerm.toLowerCase()));
+
                 return (
                     <div className="space-y-6">
                         {/* Bed Summary Cards */}
@@ -216,7 +236,7 @@ export default function Resources() {
                                                 </tr>
                                             </thead>
                                             <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                                {resourceData.beds.details.map((ward) => (
+                                                {(filteredBeds.length > 0 ? filteredBeds : resourceData.beds.details).map((ward) => (
                                                     <tr key={ward.id}>
                                                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{ward.ward}</td>
                                                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{ward.total}</td>
@@ -302,6 +322,8 @@ export default function Resources() {
                     </div>
                 );
             case 'oxygen':
+                const filteredOxygen = resourceData.oxygen.details.filter((d) => d.type.toLowerCase().includes(searchTerm.toLowerCase()));
+
                 return (
                     <div className="space-y-6">
                         {/* Oxygen Summary Cards */}
@@ -357,7 +379,7 @@ export default function Resources() {
                                                 </tr>
                                             </thead>
                                             <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                                {resourceData.oxygen.details.map((type) => (
+                                                {(filteredOxygen.length > 0 ? filteredOxygen : resourceData.oxygen.details).map((type) => (
                                                     <tr key={type.id}>
                                                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{type.type}</td>
                                                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{type.total}</td>
@@ -448,6 +470,8 @@ export default function Resources() {
                     </div>
                 );
             case 'medicines':
+                const filteredMeds = resourceData.medicines.details.filter((m) => m.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
                 return (
                     <div className="space-y-6">
                         {/* Medicine Summary Cards */}
@@ -498,7 +522,7 @@ export default function Resources() {
                                                 </tr>
                                             </thead>
                                             <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                                {resourceData.medicines.details.map((medicine) => (
+                                                {(filteredMeds.length > 0 ? filteredMeds : resourceData.medicines.details).map((medicine) => (
                                                     <tr key={medicine.id}>
                                                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{medicine.name}</td>
                                                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${medicine.stock < medicine.threshold
@@ -600,8 +624,60 @@ export default function Resources() {
     };
 
     return (
-        <div className="p-6">
-            {renderTabContent()}
+        <div className={`p-6 transition-colors duration-200 ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}>
+            {/* Header + Actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <div>
+                    <h1 className="text-2xl font-semibold">Resources</h1>
+                    <p className={`mt-1 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Manage beds, oxygen and medicine stocks in one place.</p>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                    <button onClick={handleRefresh} title="Refresh" className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${darkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
+                        <FiRefreshCw className="mr-2" /> Refresh
+                    </button>
+                    <button onClick={handleImport} title="Import" className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${darkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
+                        <FiUpload className="mr-2" /> Import
+                    </button>
+                    <button onClick={handleExport} title="Export" className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${darkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
+                        <FiDownload className="mr-2" /> Export
+                    </button>
+                    <button onClick={handleAddResource} title="Add" className="inline-flex items-center px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md text-sm font-medium">
+                        <FiPlus className="mr-2" /> Add
+                    </button>
+                </div>
+            </div>
+
+            {/* Tabs + Search */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center space-x-2">
+                    <button onClick={() => setActiveTab('beds')} className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'beds' ? 'bg-cyan-50 text-cyan-600' : darkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>Beds</button>
+                    <button onClick={() => setActiveTab('oxygen')} className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'oxygen' ? 'bg-cyan-50 text-cyan-600' : darkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>Oxygen</button>
+                    <button onClick={() => setActiveTab('medicines')} className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'medicines' ? 'bg-cyan-50 text-cyan-600' : darkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>Medicines</button>
+                </div>
+
+                <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <div className={`flex items-center w-full sm:w-80 border rounded-md px-2 py-1 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <FiSearch className={`text-gray-400 mr-2 ${darkMode ? 'text-gray-300' : ''}`} />
+                        <input
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder={`Search ${activeTab === 'beds' ? 'wards' : activeTab === 'oxygen' ? 'supplies' : 'medicines'}`}
+                            className={`w-full bg-transparent outline-none text-sm ${darkMode ? 'text-gray-100 placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'}`}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-6">
+                {isLoading ? (
+                    <div className="flex justify-center items-center py-24">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+                    </div>
+                ) : (
+                    renderTabContent()
+                )}
+            </div>
         </div>
     );
 }
