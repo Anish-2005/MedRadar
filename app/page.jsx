@@ -11,6 +11,31 @@ import {
 import { DEFAULT_FORECAST, DEFAULT_RESOURCES } from "@/lib/medradarData";
 import MedRadarLogo from "@/components/medradar-logo";
 
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://medradar.app").replace(/\/$/, "");
+
+export const metadata = {
+  title: "Hospital Resource Command Center",
+  description:
+    "MedRadar helps hospitals track beds, oxygen, and medicine inventory with actionable operational insights.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "MedRadar | Hospital Resource Command Center",
+    description:
+      "A hospital-first command center for bed occupancy, oxygen reserve, and medicine continuity.",
+    url: siteUrl,
+    images: ["/og-image.svg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MedRadar | Hospital Resource Command Center",
+    description:
+      "Track hospital resources in real time and respond faster to shortages.",
+    images: ["/og-image.svg"],
+  },
+};
+
 const featureCards = [
   {
     title: "Bed Command Tracking",
@@ -59,8 +84,36 @@ const avgForecast = Math.round(
 );
 
 export default function LandingPage() {
+  const softwareLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "MedRadar",
+    applicationCategory: "HealthApplication",
+    operatingSystem: "Web",
+    url: siteUrl,
+    description:
+      "Hospital resource optimizer for bed occupancy, oxygen reserve, and medicine inventory continuity.",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    featureList: [
+      "Bed occupancy monitoring",
+      "Oxygen reserve tracking",
+      "Medicine threshold alerts",
+      "Operational command dashboard",
+    ],
+    publisher: {
+      "@type": "Organization",
+      name: "MedRadar",
+      url: siteUrl,
+    },
+  };
+
   return (
     <div className="frost-shell">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareLd) }} />
       <header className="frost-layer border-b frost-divider bg-white/70 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <MedRadarLogo />

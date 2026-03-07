@@ -1,0 +1,39 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="90" y1="40" x2="1110" y2="590" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EEF8FF" />
+      <stop offset="45%" stop-color="#D5ECFF" />
+      <stop offset="100%" stop-color="#BCDFFF" />
+    </linearGradient>
+    <linearGradient id="tile" x1="132" y1="110" x2="330" y2="330" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#DDF2FF" />
+      <stop offset="45%" stop-color="#67B0EB" />
+      <stop offset="100%" stop-color="#0A3968" />
+    </linearGradient>
+    <linearGradient id="crystal" x1="170" y1="140" x2="274" y2="274" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#BFE4FF" stop-opacity="0.2" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect x="70" y="70" width="1060" height="490" rx="36" fill="white" fill-opacity="0.68" />
+  <rect x="130" y="120" width="200" height="200" rx="48" fill="url(#tile)" />
+  <path d="M230 142L278 180L256 262H204L182 180L230 142Z" fill="url(#crystal)" />
+  <path d="M186 187L230 158L274 187" stroke="#ECF8FF" stroke-width="5" stroke-linecap="round" stroke-opacity="0.8" />
+  <path d="M210 197H225V182H235V197H250V207H235V222H225V207H210V197Z" fill="#F7FDFF" />
+  <path d="M159 248H182L196 225L217 264L239 233L250 248H301" stroke="#F7FDFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+
+  <text x="372" y="220" fill="#0E213B" font-size="82" font-family="Segoe UI, Arial, sans-serif" font-weight="800">
+    MedRadar
+  </text>
+  <text x="372" y="278" fill="#375779" font-size="34" font-family="Segoe UI, Arial, sans-serif" font-weight="600">
+    Hospital Resource Optimizer
+  </text>
+  <text x="372" y="360" fill="#3F678D" font-size="30" font-family="Segoe UI, Arial, sans-serif">
+    Beds · Oxygen · Medicine Continuity in one command center
+  </text>
+  <text x="372" y="420" fill="#3F678D" font-size="30" font-family="Segoe UI, Arial, sans-serif">
+    Built for operations teams, duty doctors, and pharmacy leads
+  </text>
+</svg>

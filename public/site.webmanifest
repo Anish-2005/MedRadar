@@ -1,0 +1,16 @@
+{
+  "name": "MedRadar",
+  "short_name": "MedRadar",
+  "description": "Hospital resource optimizer for bed occupancy, oxygen reserve, and medicine stock continuity.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EEF7FF",
+  "theme_color": "#0A3968",
+  "icons": [
+    {
+      "src": "/medradar-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
