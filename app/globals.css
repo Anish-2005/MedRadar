@@ -125,7 +125,7 @@ button {
   display: grid;
   place-items: center;
   border-radius: 0.9rem;
-  background: linear-gradient(145deg, rgb(var(--accent)), rgb(var(--primary)));
+  background: linear-gradient(145deg, rgb(var(--primary)), rgb(var(--primary-strong)));
   color: #ffffff;
   box-shadow: 0 10px 24px rgba(42, 109, 186, 0.24);
 }
@@ -143,8 +143,9 @@ button {
 
 .frost-nav-link.is-active {
   border-color: rgba(var(--primary), 0.72);
-  background: linear-gradient(138deg, rgba(var(--primary), 0.95), rgba(var(--accent), 0.93));
+  background: linear-gradient(138deg, #0b3d70, #1b5b96);
   color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
   box-shadow: 0 10px 18px rgba(42, 109, 186, 0.23);
 }
 
@@ -176,13 +177,16 @@ button {
 }
 
 .frost-btn-primary {
-  border: 1px solid rgba(var(--primary), 0.72);
-  background: linear-gradient(140deg, rgba(var(--primary), 0.98), rgba(var(--accent), 0.98));
+  border: 1px solid rgba(var(--primary-strong), 0.76);
+  background: linear-gradient(140deg, #0a3968, #1b5a94);
   color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
   box-shadow: 0 12px 18px rgba(42, 109, 186, 0.24);
 }
 
 .frost-btn-primary:hover {
+  border-color: rgba(var(--primary-strong), 0.9);
+  background: linear-gradient(140deg, #082f58, #174f84);
   transform: translateY(-1px);
   box-shadow: 0 15px 22px rgba(42, 109, 186, 0.28);
 }
