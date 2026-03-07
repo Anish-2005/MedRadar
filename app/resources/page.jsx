@@ -123,7 +123,12 @@ export default function ResourcesPage() {
     setShowForm(false);
   }, [activeTab]);
 
-  const collection = resources?.[activeTab] ?? [];
+  const collection = useMemo(() => {
+    if (!resources) {
+      return [];
+    }
+    return resources[activeTab] ?? [];
+  }, [resources, activeTab]);
 
   const filteredCollection = useMemo(() => {
     if (!search.trim()) {
