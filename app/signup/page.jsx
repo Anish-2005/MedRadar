@@ -4,12 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Hospital, UserPlus } from "lucide-react";
-import {
-  getSession,
-  loginUser,
-  registerUser,
-  seedMedRadarStore,
-} from "@/lib/medradarStore";
+import { ApiError, getSession, signup } from "@/lib/client/api";
+import { ROLE_OPTIONS } from "@/lib/shared/roles";
 
 const EMPTY_FORM = {
   name: "",
@@ -17,7 +13,7 @@ const EMPTY_FORM = {
   email: "",
   password: "",
   confirmPassword: "",
-  role: "Hospital Operations Manager",
+  role: "operations",
 };
 
 export default function SignupPage() {
@@ -27,11 +23,16 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    seedMedRadarStore();
-    const existing = getSession();
-    if (existing) {
-      router.replace("/dashboard");
-    }
+    const checkExistingSession = async () => {
+      try {
+        await getSession();
+        router.replace("/dashboard");
+      } catch {
+        // stay on signup
+      }
+    };
+
+    checkExistingSession();
   }, [router]);
 
   const handleChange = (event) => {
@@ -39,7 +40,7 @@ export default function SignupPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
 
@@ -55,23 +56,23 @@ export default function SignupPage() {
 
     setIsLoading(true);
 
-    const created = registerUser(form);
-    if (!created.ok) {
-      setError(created.message);
+    try {
+      await signup({
+        name: form.name,
+        hospitalName: form.hospitalName,
+        email: form.email,
+        password: form.password,
+        role: form.role,
+      });
+      router.push("/dashboard");
+    } catch (nextError) {
+      if (nextError instanceof ApiError) {
+        setError(nextError.message);
+      } else {
+        setError("Could not create account right now.");
+      }
       setIsLoading(false);
-      return;
     }
-
-    const loginResult = loginUser(form.email, form.password);
-
-    if (!loginResult.ok) {
-      setError("Account was created but login failed. Please sign in manually.");
-      setIsLoading(false);
-      router.push("/login");
-      return;
-    }
-
-    router.push("/dashboard");
   };
 
   return (
@@ -158,10 +159,11 @@ export default function SignupPage() {
               onChange={handleChange}
               className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
             >
-              <option>Hospital Operations Manager</option>
-              <option>Medical Superintendent</option>
-              <option>Pharmacy Lead</option>
-              <option>Emergency Response Coordinator</option>
+              {ROLE_OPTIONS.filter((role) => role.id !== "admin").map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.label}
+                </option>
+              ))}
             </select>
           </label>
 

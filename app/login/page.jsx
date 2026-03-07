@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HeartPulse, LogIn } from "lucide-react";
-import { getSession, loginUser, seedMedRadarStore } from "@/lib/medradarStore";
+import { ApiError, getSession, login } from "@/lib/client/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,27 +14,34 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    seedMedRadarStore();
-    const existing = getSession();
-    if (existing) {
-      router.replace("/dashboard");
-    }
+    const checkExistingSession = async () => {
+      try {
+        await getSession();
+        router.replace("/dashboard");
+      } catch {
+        // keep user on login
+      }
+    };
+
+    checkExistingSession();
   }, [router]);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
     setIsLoading(true);
 
-    const result = loginUser(email, password);
-
-    if (!result.ok) {
-      setError(result.message);
+    try {
+      await login({ email, password });
+      router.push("/dashboard");
+    } catch (nextError) {
+      if (nextError instanceof ApiError) {
+        setError(nextError.message);
+      } else {
+        setError("Unable to sign in right now.");
+      }
       setIsLoading(false);
-      return;
     }
-
-    router.push("/dashboard");
   };
 
   return (

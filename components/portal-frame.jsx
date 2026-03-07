@@ -10,20 +10,29 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { logoutUser } from "@/lib/medradarStore";
+import { logout } from "@/lib/client/api";
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Command Center", icon: Activity },
   { href: "/resources", label: "Resource Desk", icon: Boxes },
-  { href: "/dashboard/admin", label: "Admin", icon: ShieldCheck },
 ];
 
 export default function PortalFrame({ title, subtitle, session, children, rightSlot }) {
   const pathname = usePathname();
   const router = useRouter();
+  const navItems = [
+    ...BASE_NAV_ITEMS,
+    ...(session?.permissions?.canAccessAdmin
+      ? [{ href: "/dashboard/admin", label: "Admin", icon: ShieldCheck }]
+      : []),
+  ];
 
-  const handleLogout = () => {
-    logoutUser();
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // redirect regardless
+    }
     router.replace("/login");
   };
 
@@ -45,7 +54,7 @@ export default function PortalFrame({ title, subtitle, session, children, rightS
             <div className="flex items-center gap-3">
               <div className="hidden rounded-xl border border-cyan-100 bg-cyan-50/70 px-3 py-2 text-right sm:block">
                 <p className="text-sm font-semibold text-slate-800">{session?.name}</p>
-                <p className="text-xs text-slate-500">{session?.role}</p>
+                <p className="text-xs text-slate-500">{session?.roleLabel || session?.role}</p>
               </div>
               <button
                 type="button"
@@ -60,7 +69,7 @@ export default function PortalFrame({ title, subtitle, session, children, rightS
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <nav className="flex flex-wrap gap-2">
-              {NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.href;
 
