@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -24,12 +24,8 @@ import {
 import PortalFrame from "@/components/portal-frame";
 import { DEFAULT_FORECAST } from "@/lib/medradarData";
 import {
-  getAuditLog,
-  getResources,
-  getSettings,
-  seedMedRadarStore,
-} from "@/lib/medradarStore";
 import { useRequireSession } from "@/lib/useRequireSession";
+import { useMedRadarLiveData } from "@/lib/useMedRadarLiveData";
 
 function percent(value, total) {
   if (!total) {
@@ -40,20 +36,7 @@ function percent(value, total) {
 
 export default function DashboardPage() {
   const { session, ready } = useRequireSession();
-  const [resources, setResources] = useState(null);
-  const [settings, setSettings] = useState(null);
-  const [audit, setAudit] = useState([]);
-
-  useEffect(() => {
-    if (!ready || !session) {
-      return;
-    }
-
-    seedMedRadarStore();
-    setResources(getResources());
-    setSettings(getSettings());
-    setAudit(getAuditLog().slice(0, 6));
-  }, [ready, session]);
+  const { resources, settings, audit, loaded } = useMedRadarLiveData({ includeAudit: true });
 
   const metrics = useMemo(() => {
     if (!resources) {
@@ -118,7 +101,7 @@ export default function DashboardPage() {
     return list;
   }, [metrics, resources, settings]);
 
-  if (!ready || !session || !resources || !settings || !metrics) {
+  if (!ready || !session || !loaded || !resources || !settings || !metrics) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow">Loading command center...</div>
@@ -283,7 +266,7 @@ export default function DashboardPage() {
         <article className="rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
           <h2 className="font-[var(--font-display)] text-lg font-bold text-slate-900">Recent Activity</h2>
           <ul className="mt-4 space-y-2 text-sm text-slate-700">
-            {audit.map((entry) => (
+            {audit.slice(0, 6).map((entry) => (
               <li key={entry.id} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
                 <p className="font-semibold text-slate-900">{entry.action}</p>
                 <p className="text-xs text-slate-500">
