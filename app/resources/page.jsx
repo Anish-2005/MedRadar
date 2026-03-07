@@ -11,7 +11,11 @@ import {
   Upload,
 } from "lucide-react";
 import PortalFrame from "@/components/portal-frame";
-import { importResources, saveResources } from "@/lib/medradarStore";
+import {
+  ApiError,
+  importResources as importResourceSnapshot,
+  updateResourceType,
+} from "@/lib/client/api";
 import { useMedRadarLiveData } from "@/lib/useMedRadarLiveData";
 import { useRequireSession } from "@/lib/useRequireSession";
 
@@ -120,7 +124,7 @@ function utilizationBadge(percent) {
 
 export default function ResourcesPage() {
   const { session, ready } = useRequireSession();
-  const { resources: liveResources, loaded, refresh } = useMedRadarLiveData();
+  const { resources: liveResources, loaded, refresh, error: loadError } = useMedRadarLiveData();
   const [resources, setResources] = useState(null);
   const [activeTab, setActiveTab] = useState("beds");
   const [search, setSearch] = useState("");
@@ -130,7 +134,11 @@ export default function ResourcesPage() {
   const [showForm, setShowForm] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [lastSyncAt, setLastSyncAt] = useState(nowTime());
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
+
+  const canImportSnapshot = Boolean(session?.permissions?.canAccessAdmin);
+  const canEditActiveType = Boolean(session?.permissions?.resourceWrite?.includes(activeTab));
 
   useEffect(() => {
     if (!ready || !session || !loaded || !liveResources) {
@@ -190,18 +198,34 @@ export default function ResourcesPage() {
     window.setTimeout(() => setFeedback(null), 2500);
   };
 
-  const persist = (nextResources, message) => {
-    setResources(nextResources);
-    saveResources(nextResources, session.name);
-    setLastSyncAt(nowTime());
-    refresh();
-    if (message) {
-      clearFeedbackLater(message, "success");
+  const persist = async (nextCollection, message) => {
+    setIsSaving(true);
+    try {
+      const response = await updateResourceType(activeTab, nextCollection);
+      setResources(response.resources);
+      setLastSyncAt(nowTime());
+      await refresh();
+      if (message) {
+        clearFeedbackLater(message, "success");
+      }
+    } catch (nextError) {
+      if (nextError instanceof ApiError) {
+        setFeedback({ type: "error", message: nextError.message });
+      } else {
+        setFeedback({ type: "error", message: "Failed to save resource changes." });
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleSave = (event) => {
+  const handleSave = async (event) => {
     event.preventDefault();
+
+    if (!canEditActiveType) {
+      setError("Your role has read-only access for this resource type.");
+      return;
+    }
 
     const validation = validateForm(activeTab, form);
     if (validation) {
@@ -214,8 +238,7 @@ export default function ResourcesPage() {
       ? collection.map((row) => (row.id === editingId ? item : row))
       : [item, ...collection];
 
-    const nextResources = { ...resources, [activeTab]: nextCollection };
-    persist(nextResources, editingId ? "Row updated." : "Row added.");
+    await persist(nextCollection, editingId ? "Row updated." : "Row added.");
 
     setForm(buildEmptyForm(activeTab));
     setEditingId(null);
@@ -224,20 +247,30 @@ export default function ResourcesPage() {
   };
 
   const handleEdit = (item) => {
+    if (!canEditActiveType) {
+      setFeedback({ type: "error", message: "Your role has read-only access for this resource type." });
+      return;
+    }
+
     setEditingId(item.id);
     setForm({ ...item });
     setShowForm(true);
     setError("");
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
+    if (!canEditActiveType) {
+      setFeedback({ type: "error", message: "Your role has read-only access for this resource type." });
+      return;
+    }
+
     const ok = window.confirm("Delete this row from resource inventory?");
     if (!ok) {
       return;
     }
 
     const nextCollection = collection.filter((row) => row.id !== id);
-    persist({ ...resources, [activeTab]: nextCollection }, "Row deleted.");
+    await persist(nextCollection, "Row deleted.");
 
     if (editingId === id) {
       setEditingId(null);
@@ -263,6 +296,10 @@ export default function ResourcesPage() {
   };
 
   const openImportPicker = () => {
+    if (!canImportSnapshot) {
+      setFeedback({ type: "error", message: "Only admins can import full snapshots." });
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -277,24 +314,23 @@ export default function ResourcesPage() {
     try {
       const content = await file.text();
       const parsed = JSON.parse(content);
-      const result = importResources(parsed, session.name);
-
-      if (!result.ok) {
-        setFeedback({ type: "error", message: result.message });
-        return;
-      }
+      const result = await importResourceSnapshot(parsed);
 
       setResources(result.resources);
       setLastSyncAt(nowTime());
-      refresh();
-      clearFeedbackLater(result.message, "success");
-    } catch {
-      setFeedback({ type: "error", message: "Failed to import file. Upload valid JSON." });
+      await refresh();
+      clearFeedbackLater(result.message || "Resource snapshot imported.", "success");
+    } catch (nextError) {
+      if (nextError instanceof ApiError) {
+        setFeedback({ type: "error", message: nextError.message });
+      } else {
+        setFeedback({ type: "error", message: "Failed to import file. Upload valid JSON." });
+      }
     }
   };
 
-  const handleManualRefresh = () => {
-    refresh();
+  const handleManualRefresh = async () => {
+    await refresh();
     setLastSyncAt(nowTime());
     clearFeedbackLater("Resource data refreshed.", "success");
   };
@@ -325,7 +361,8 @@ export default function ResourcesPage() {
           <button
             type="button"
             onClick={openImportPicker}
-            className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50 disabled:opacity-60"
+            disabled={!canImportSnapshot}
           >
             <Upload className="h-4 w-4" />
             Import JSON
@@ -350,19 +387,27 @@ export default function ResourcesPage() {
     >
       <section className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
         <p>Last sync at {lastSyncAt}</p>
-        <p>Operator: {session.name}</p>
+        <p>
+          Operator: {session.name} ({session.roleLabel || session.role})
+        </p>
       </section>
 
-      {feedback ? (
+      {!canEditActiveType ? (
+        <section className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          Your role is read-only for <span className="font-semibold">{activeTab}</span>. You can still view all inventory.
+        </section>
+      ) : null}
+
+      {loadError || feedback ? (
         <section
           className={`mb-4 flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
-            feedback.type === "error"
+            loadError || feedback?.type === "error"
               ? "border-rose-200 bg-rose-50 text-rose-700"
               : "border-emerald-200 bg-emerald-50 text-emerald-700"
           }`}
         >
           <AlertCircle className="h-4 w-4" />
-          {feedback.message}
+          {loadError || feedback?.message}
         </section>
       ) : null}
 
@@ -403,13 +448,14 @@ export default function ResourcesPage() {
             />
             <button
               type="button"
+              disabled={!canEditActiveType}
               onClick={() => {
                 setShowForm((prev) => !prev);
                 setEditingId(null);
                 setForm(buildEmptyForm(activeTab));
                 setError("");
               }}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 px-3 py-2 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Plus className="h-4 w-4" />
               Add {activeTab.slice(0, -1)}
@@ -550,7 +596,8 @@ export default function ResourcesPage() {
             <div className="mt-3 flex items-center gap-2">
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Save className="h-4 w-4" />
                 {editingId ? "Update" : "Save"}
@@ -681,15 +728,17 @@ export default function ResourcesPage() {
                     <div className="flex gap-2">
                       <button
                         type="button"
+                        disabled={!canEditActiveType}
                         onClick={() => handleEdit(item)}
-                        className="rounded-lg border border-cyan-200 px-2 py-1 text-xs font-semibold text-cyan-700"
+                        className="rounded-lg border border-cyan-200 px-2 py-1 text-xs font-semibold text-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
+                        disabled={!canEditActiveType}
                         onClick={() => handleDelete(item.id)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2 py-1 text-xs font-semibold text-rose-700"
+                        className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2 py-1 text-xs font-semibold text-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                         Delete

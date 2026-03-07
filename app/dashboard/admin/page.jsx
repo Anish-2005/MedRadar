@@ -3,15 +3,20 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, RotateCcw, Save } from "lucide-react";
 import PortalFrame from "@/components/portal-frame";
-import { resetDemoData, saveSettings } from "@/lib/medradarStore";
+import {
+  ApiError,
+  resetDemoData,
+  updateSettings,
+} from "@/lib/client/api";
 import { useRequireSession } from "@/lib/useRequireSession";
 import { useMedRadarLiveData } from "@/lib/useMedRadarLiveData";
 
 export default function AdminPage() {
-  const { session, ready } = useRequireSession();
-  const { resources, settings, audit, loaded, refresh } = useMedRadarLiveData({ includeAudit: true });
+  const { session, ready } = useRequireSession({ allowedRoles: ["admin"] });
+  const { resources, settings, audit, loaded, refresh, error } = useMedRadarLiveData({ includeAudit: true });
   const [draftSettings, setDraftSettings] = useState(null);
   const [savedMessage, setSavedMessage] = useState("");
+  const [actionError, setActionError] = useState("");
   const activeSettings = draftSettings ?? settings;
   const hasChanges =
     settings && activeSettings
@@ -43,24 +48,43 @@ export default function AdminPage() {
     ];
   }, [resources]);
 
-  const handleSave = (event) => {
+  const handleSave = async (event) => {
     event.preventDefault();
     if (!hasChanges || hasInvalidSettings) {
       return;
     }
-    saveSettings(draftSettings ?? settings, session.name);
-    setDraftSettings(null);
-    refresh();
-    setSavedMessage("Settings saved.");
-    setTimeout(() => setSavedMessage(""), 2000);
+    setActionError("");
+
+    try {
+      await updateSettings(draftSettings ?? settings);
+      setDraftSettings(null);
+      await refresh();
+      setSavedMessage("Settings saved.");
+      setTimeout(() => setSavedMessage(""), 2000);
+    } catch (nextError) {
+      if (nextError instanceof ApiError) {
+        setActionError(nextError.message);
+      } else {
+        setActionError("Could not save settings.");
+      }
+    }
   };
 
-  const handleReset = () => {
-    resetDemoData(session.name);
-    setDraftSettings(null);
-    refresh();
-    setSavedMessage("Demo data reset complete.");
-    setTimeout(() => setSavedMessage(""), 2500);
+  const handleReset = async () => {
+    setActionError("");
+    try {
+      await resetDemoData();
+      setDraftSettings(null);
+      await refresh();
+      setSavedMessage("Demo data reset complete.");
+      setTimeout(() => setSavedMessage(""), 2500);
+    } catch (nextError) {
+      if (nextError instanceof ApiError) {
+        setActionError(nextError.message);
+      } else {
+        setActionError("Could not reset demo data.");
+      }
+    }
   };
 
   if (!ready || !session || !loaded || !settings || !resources) {
@@ -87,6 +111,12 @@ export default function AdminPage() {
         </button>
       }
     >
+      {error || actionError ? (
+        <section className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          {error || actionError}
+        </section>
+      ) : null}
+
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {quickStats.map((card) => (
           <article key={card.label} className="rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">

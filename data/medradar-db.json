@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "users": [
+    {
+      "id": "u-admin",
+      "name": "Dr. Asha Mehta",
+      "email": "admin@medradar.app",
+      "role": "admin",
+      "hospitalName": "MedRadar General Hospital",
+      "passwordHash": "05de6b20bd960958397e87793223c8dfc52cc213d12feaecd9f165c8527462d84f5469aabce6efbc9df55c4f56f11cb3fa5720b5bc678e913474c11b751d0458",
+      "passwordSalt": "53331efa4ec3fb104d71ea8f069d5364",
+      "createdAt": "2026-03-07T15:19:37.754Z",
+      "updatedAt": "2026-03-07T15:19:37.754Z"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "s-5b57f7f5-aba9-49b9-b375-2e24b2dd8e15",
+      "token": "tok-59aa209a-0343-4067-9ba8-bf63ce2f01d2-eaa3eff9-feb5-4c17-972b-995149d0654c",
+      "userId": "u-admin",
+      "createdAt": "2026-03-07T15:19:37.820Z",
+      "expiresAt": "2026-03-14T15:19:37.820Z"
+    }
+  ],
+  "resources": {
+    "beds": [
+      {
+        "id": "bed-1",
+        "ward": "General Ward A",
+        "total": 40,
+        "occupied": 33,
+        "lastUpdated": "07:10"
+      },
+      {
+        "id": "bed-2",
+        "ward": "General Ward B",
+        "total": 36,
+        "occupied": 28,
+        "lastUpdated": "07:05"
+      },
+      {
+        "id": "bed-3",
+        "ward": "ICU",
+        "total": 18,
+        "occupied": 16,
+        "lastUpdated": "07:20"
+      },
+      {
+        "id": "bed-4",
+        "ward": "Isolation",
+        "total": 12,
+        "occupied": 6,
+        "lastUpdated": "06:55"
+      },
+      {
+        "id": "bed-5",
+        "ward": "Pediatric",
+        "total": 14,
+        "occupied": 9,
+        "lastUpdated": "06:40"
+      }
+    ],
+    "oxygen": [
+      {
+        "id": "oxy-1",
+        "source": "Main Liquid Tank",
+        "capacity": 6200,
+        "available": 2410,
+        "flowRateLph": 380,
+        "status": "warning"
+      },
+      {
+        "id": "oxy-2",
+        "source": "Cylinder Bank A",
+        "capacity": 2400,
+        "available": 1340,
+        "flowRateLph": 140,
+        "status": "normal"
+      },
+      {
+        "id": "oxy-3",
+        "source": "Cylinder Bank B",
+        "capacity": 2400,
+        "available": 820,
+        "flowRateLph": 190,
+        "status": "warning"
+      }
+    ],
+    "medicines": [
+      {
+        "id": "med-1",
+        "name": "Ceftriaxone",
+        "stock": 210,
+        "threshold": 120,
+        "dailyUse": 28,
+        "unit": "vials"
+      },
+      {
+        "id": "med-2",
+        "name": "Remdesivir",
+        "stock": 68,
+        "threshold": 55,
+        "dailyUse": 11,
+        "unit": "vials"
+      },
+      {
+        "id": "med-3",
+        "name": "Noradrenaline",
+        "stock": 31,
+        "threshold": 40,
+        "dailyUse": 6,
+        "unit": "ampoules"
+      },
+      {
+        "id": "med-4",
+        "name": "Paracetamol",
+        "stock": 390,
+        "threshold": 180,
+        "dailyUse": 52,
+        "unit": "strips"
+      },
+      {
+        "id": "med-5",
+        "name": "Insulin",
+        "stock": 72,
+        "threshold": 48,
+        "dailyUse": 7,
+        "unit": "pens"
+      }
+    ]
+  },
+  "settings": {
+    "bedOccupancyAlertPercent": 88,
+    "oxygenReserveAlertPercent": 30,
+    "medicineLowDays": 4,
+    "shiftLead": "Nurse Supervisor - Unit 2",
+    "escalationContact": "+91 91000 11001"
+  },
+  "audit": [
+    {
+      "id": "audit-b8e18bde-0805-4e1a-a92b-93d37b182f48",
+      "actor": "Dr. Asha Mehta",
+      "action": "Logged in",
+      "target": "Portal",
+      "severity": "info",
+      "createdAt": "2026-03-07T15:19:37.829Z",
+      "time": "20:49"
+    },
+    {
+      "id": "audit-1",
+      "actor": "System",
+      "action": "Daily sync completed",
+      "target": "Resource snapshot",
+      "severity": "info",
+      "createdAt": "2026-03-07T15:19:37.755Z",
+      "time": "06:30"
+    },
+    {
+      "id": "audit-2",
+      "actor": "Pharmacy Desk",
+      "action": "Stock updated",
+      "target": "Ceftriaxone",
+      "severity": "info",
+      "createdAt": "2026-03-07T15:19:37.755Z",
+      "time": "06:10"
+    },
+    {
+      "id": "audit-3",
+      "actor": "ICU Desk",
+      "action": "Ward occupancy updated",
+      "target": "ICU",
+      "severity": "info",
+      "createdAt": "2026-03-07T15:19:37.755Z",
+      "time": "05:55"
+    }
+  ]
+}

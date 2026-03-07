@@ -25,171 +25,27 @@ import {
 } from "recharts";
 import PortalFrame from "@/components/portal-frame";
 import { DEFAULT_FORECAST } from "@/lib/medradarData";
+import {
+  buildDataQuality,
+  buildOperationalChecklist,
+  calculateAlerts,
+  calculateDashboardMetrics,
+  percent,
+} from "@/lib/domain/operations";
 import { useRequireSession } from "@/lib/useRequireSession";
 import { useMedRadarLiveData } from "@/lib/useMedRadarLiveData";
 
-function percent(value, total) {
-  if (!total) {
-    return 0;
-  }
-  return Math.round((value / total) * 100);
-}
-
 export default function DashboardPage() {
   const { session, ready } = useRequireSession();
-  const { resources, settings, audit, loaded } = useMedRadarLiveData({ includeAudit: true });
+  const { resources, settings, audit, loaded, error } = useMedRadarLiveData({ includeAudit: true });
 
-  const metrics = useMemo(() => {
-    if (!resources) {
-      return null;
-    }
-
-    const totalBeds = resources.beds.reduce((sum, row) => sum + row.total, 0);
-    const occupiedBeds = resources.beds.reduce((sum, row) => sum + row.occupied, 0);
-
-    const oxygenCapacity = resources.oxygen.reduce((sum, source) => sum + source.capacity, 0);
-    const oxygenAvailable = resources.oxygen.reduce((sum, source) => sum + source.available, 0);
-    const hourlyFlow = resources.oxygen.reduce((sum, source) => sum + source.flowRateLph, 0);
-
-    const medicineStock = resources.medicines.reduce((sum, med) => sum + med.stock, 0);
-    const lowMedicineCount = resources.medicines.filter((med) => med.stock <= med.threshold).length;
-
-    return {
-      totalBeds,
-      occupiedBeds,
-      bedOccupancyPercent: percent(occupiedBeds, totalBeds),
-      oxygenCapacity,
-      oxygenAvailable,
-      oxygenReservePercent: percent(oxygenAvailable, oxygenCapacity),
-      estimatedOxygenHours: hourlyFlow ? Math.round((oxygenAvailable / hourlyFlow) * 10) / 10 : 0,
-      medicineStock,
-      lowMedicineCount,
-    };
-  }, [resources]);
-
-  const alerts = useMemo(() => {
-    if (!resources || !settings || !metrics) {
-      return [];
-    }
-
-    const list = [];
-
-    if (metrics.bedOccupancyPercent >= settings.bedOccupancyAlertPercent) {
-      list.push({
-        id: "beds",
-        severity: "critical",
-        message: `Bed occupancy is at ${metrics.bedOccupancyPercent}% (threshold ${settings.bedOccupancyAlertPercent}%).`,
-      });
-    }
-
-    if (metrics.oxygenReservePercent <= settings.oxygenReserveAlertPercent) {
-      list.push({
-        id: "oxygen",
-        severity: "critical",
-        message: `Oxygen reserve is ${metrics.oxygenReservePercent}% with around ${metrics.estimatedOxygenHours} hours left.`,
-      });
-    }
-
-    const medicineRisk = resources.medicines.filter((med) => med.dailyUse > 0 && med.stock / med.dailyUse <= settings.medicineLowDays);
-    if (medicineRisk.length) {
-      list.push({
-        id: "meds",
-        severity: "warning",
-        message: `${medicineRisk.length} medicines may run out in ${settings.medicineLowDays} days or less.`,
-      });
-    }
-
-    return list;
-  }, [metrics, resources, settings]);
-
-  const operationalChecklist = useMemo(() => {
-    if (!resources || !settings || !metrics) {
-      return [];
-    }
-
-    const items = [];
-
-    const overloadedWards = resources.beds.filter(
-      (ward) => percent(ward.occupied, ward.total) >= settings.bedOccupancyAlertPercent
-    );
-    if (overloadedWards.length) {
-      items.push({
-        id: "beds",
-        level: "critical",
-        text: `Escalate discharge and triage on ${overloadedWards.length} ward(s) crossing occupancy threshold.`,
-      });
-    } else {
-      items.push({
-        id: "beds-ok",
-        level: "stable",
-        text: "Bed occupancy is below alert threshold across all wards.",
-      });
-    }
-
-    if (metrics.oxygenReservePercent <= settings.oxygenReserveAlertPercent + 10) {
-      items.push({
-        id: "oxygen",
-        level: "warning",
-        text: "Prepare oxygen replenishment for next shift handover to avoid reserve dips.",
-      });
-    } else {
-      items.push({
-        id: "oxygen-ok",
-        level: "stable",
-        text: "Oxygen reserve is in acceptable range for current demand.",
-      });
-    }
-
-    const medicineShortlist = resources.medicines.filter(
-      (med) => med.dailyUse > 0 && med.stock / med.dailyUse <= settings.medicineLowDays
-    );
-    if (medicineShortlist.length) {
-      items.push({
-        id: "meds",
-        level: "warning",
-        text: `Fast-track procurement for ${medicineShortlist.length} medicine(s) with short runway.`,
-      });
-    } else {
-      items.push({
-        id: "meds-ok",
-        level: "stable",
-        text: "No medicine is below configured runway threshold.",
-      });
-    }
-
-    return items;
-  }, [metrics, resources, settings]);
-
-  const dataQuality = useMemo(() => {
-    if (!resources) {
-      return [];
-    }
-
-    const bedsWithoutUpdate = resources.beds.filter((row) => !row.lastUpdated || row.lastUpdated === "--:--").length;
-    const oxygenWithoutFlow = resources.oxygen.filter((row) => row.flowRateLph <= 0).length;
-    const medicinesWithoutUsage = resources.medicines.filter((row) => row.dailyUse <= 0).length;
-
-    return [
-      {
-        id: "beds-updated",
-        label: "Wards missing update time",
-        value: bedsWithoutUpdate,
-        healthy: bedsWithoutUpdate === 0,
-      },
-      {
-        id: "oxygen-flow",
-        label: "Oxygen sources with zero flow",
-        value: oxygenWithoutFlow,
-        healthy: oxygenWithoutFlow === 0,
-      },
-      {
-        id: "med-usage",
-        label: "Medicines without usage baseline",
-        value: medicinesWithoutUsage,
-        healthy: medicinesWithoutUsage === 0,
-      },
-    ];
-  }, [resources]);
+  const metrics = useMemo(() => calculateDashboardMetrics(resources), [resources]);
+  const alerts = useMemo(() => calculateAlerts(resources, settings, metrics), [metrics, resources, settings]);
+  const operationalChecklist = useMemo(
+    () => buildOperationalChecklist(resources, settings, metrics),
+    [metrics, resources, settings]
+  );
+  const dataQuality = useMemo(() => buildDataQuality(resources), [resources]);
 
   if (!ready || !session || !loaded || !resources || !settings || !metrics) {
     return (
@@ -214,6 +70,12 @@ export default function DashboardPage() {
         </Link>
       }
     >
+      {error ? (
+        <section className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          {error}
+        </section>
+      ) : null}
+
       {alerts.length ? (
         <section className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 p-4">
           <div className="flex items-center gap-2 text-rose-700">
