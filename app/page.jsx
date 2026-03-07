@@ -60,103 +60,91 @@ const avgForecast = Math.round(
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-cyan-100 bg-white/80 backdrop-blur">
+    <div className="frost-shell">
+      <header className="frost-layer border-b frost-divider bg-white/70 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-cyan-500 to-sky-600 text-white shadow-lg shadow-cyan-200">
+            <div className="frost-brand h-11 w-11">
               <HeartPulse className="h-6 w-6" />
             </div>
             <div>
-              <p className="font-[var(--font-display)] text-xl font-bold text-slate-900">MedRadar</p>
-              <p className="text-xs text-slate-500">Hospital Resource Optimizer</p>
+              <p className="frost-title font-[var(--font-display)] text-xl font-bold">MedRadar</p>
+              <p className="frost-subtitle text-xs">Hospital Resource Optimizer</p>
             </div>
           </div>
 
           <nav className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="rounded-xl border border-cyan-200 px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
-            >
+            <Link href="/login" className="frost-btn-secondary">
               Sign in
             </Link>
-            <Link
-              href="/signup"
-              className="rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-200 transition hover:from-cyan-700 hover:to-sky-700"
-            >
+            <Link href="/signup" className="frost-btn-primary">
               Request access
             </Link>
           </nav>
         </div>
       </header>
 
-      <main>
+      <main className="frost-layer">
         <section className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:px-8 lg:py-16">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+            <span className="frost-chip inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide">
               <Building2 className="h-4 w-4" /> Tier 2 and Tier 3 Hospital Operations
             </span>
-            <h1 className="mt-5 max-w-2xl text-4xl font-black leading-tight text-slate-900 sm:text-5xl">
+            <h1 className="frost-title mt-5 max-w-2xl text-4xl font-black leading-tight sm:text-5xl">
               Run your hospital resource command center with speed and clarity.
             </h1>
-            <p className="mt-4 max-w-xl text-base text-slate-600 sm:text-lg">
+            <p className="frost-subtitle mt-4 max-w-xl text-base sm:text-lg">
               MedRadar keeps beds, oxygen, and medicine inventory in one operational view so teams can act early,
               avoid shortages, and improve patient continuity.
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link
-                href="/signup"
-                className="rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-200 transition hover:from-cyan-700 hover:to-sky-700"
-              >
+              <Link href="/signup" className="frost-btn-primary">
                 Launch Hospital Workspace
               </Link>
-              <Link
-                href="/login"
-                className="rounded-xl border border-cyan-200 bg-white px-5 py-3 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
-              >
+              <Link href="/login" className="frost-btn-secondary">
                 Open Demo Account
               </Link>
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-3 text-xs text-slate-500">
-              <span className="rounded-lg bg-white px-3 py-2 shadow-sm">Default demo: `admin@medradar.app`</span>
-              <span className="rounded-lg bg-white px-3 py-2 shadow-sm">Password: `admin123`</span>
+            <div className="mt-8 flex flex-wrap gap-3 text-xs">
+              <span className="frost-card-soft rounded-lg px-3 py-2">Default demo: `admin@medradar.app`</span>
+              <span className="frost-card-soft rounded-lg px-3 py-2">Password: `admin123`</span>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-cyan-100 bg-white p-5 shadow-xl shadow-cyan-100/60">
+          <div className="frost-glass frost-reveal rounded-2xl p-5">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="font-[var(--font-display)] text-lg font-bold text-slate-900">Live Snapshot</h2>
-              <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Operational</span>
+              <h2 className="frost-title font-[var(--font-display)] text-lg font-bold">Live Snapshot</h2>
+              <span className="frost-status-success">Operational</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">Bed Occupancy</p>
-                <p className="mt-1 text-2xl font-bold text-slate-900">{Math.round((occupiedBeds / totalBeds) * 100)}%</p>
-                <p className="text-xs text-slate-500">{occupiedBeds}/{totalBeds} occupied</p>
+              <div className="frost-card-soft rounded-xl p-3">
+                <p className="frost-subtitle text-xs">Bed Occupancy</p>
+                <p className="frost-title mt-1 text-2xl font-bold">{Math.round((occupiedBeds / totalBeds) * 100)}%</p>
+                <p className="frost-subtitle text-xs">{occupiedBeds}/{totalBeds} occupied</p>
               </div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">Oxygen Reserve</p>
-                <p className="mt-1 text-2xl font-bold text-slate-900">{Math.round((oxygenAvailable / oxygenCapacity) * 100)}%</p>
-                <p className="text-xs text-slate-500">{oxygenAvailable} / {oxygenCapacity} L</p>
+              <div className="frost-card-soft rounded-xl p-3">
+                <p className="frost-subtitle text-xs">Oxygen Reserve</p>
+                <p className="frost-title mt-1 text-2xl font-bold">{Math.round((oxygenAvailable / oxygenCapacity) * 100)}%</p>
+                <p className="frost-subtitle text-xs">{oxygenAvailable} / {oxygenCapacity} L</p>
               </div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">Forecast Avg</p>
-                <p className="mt-1 text-2xl font-bold text-slate-900">{avgForecast}</p>
-                <p className="text-xs text-slate-500">beds/day next week</p>
+              <div className="frost-card-soft rounded-xl p-3">
+                <p className="frost-subtitle text-xs">Forecast Avg</p>
+                <p className="frost-title mt-1 text-2xl font-bold">{avgForecast}</p>
+                <p className="frost-subtitle text-xs">beds/day next week</p>
               </div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">Critical Alerts</p>
+              <div className="frost-card-soft rounded-xl p-3">
+                <p className="frost-subtitle text-xs">Critical Alerts</p>
                 <p className="mt-1 text-2xl font-bold text-rose-600">2</p>
-                <p className="text-xs text-slate-500">active escalation</p>
+                <p className="frost-subtitle text-xs">active escalation</p>
               </div>
             </div>
 
-            <div className="mt-5 rounded-xl border border-cyan-100 bg-cyan-50 p-3 text-sm text-cyan-900">
+            <div className="frost-alert mt-5 text-sm">
               <p className="font-semibold">Shift recommendation</p>
-              <p className="mt-1 text-cyan-800">Increase ICU discharge planning before 18:00 and refill Bank B oxygen line before night shift.</p>
+              <p className="mt-1">Increase ICU discharge planning before 18:00 and refill Bank B oxygen line before night shift.</p>
             </div>
           </div>
         </section>
@@ -166,12 +154,12 @@ export default function LandingPage() {
             {featureCards.map((feature) => {
               const Icon = feature.icon;
               return (
-                <article key={feature.title} className="rounded-2xl border border-cyan-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                  <div className="inline-flex rounded-xl bg-cyan-50 p-2 text-cyan-700">
+                <article key={feature.title} className="frost-card frost-reveal rounded-2xl p-5 transition hover:-translate-y-1 hover:shadow-lg">
+                  <div className="frost-chip inline-flex rounded-xl p-2">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="mt-3 font-[var(--font-display)] text-lg font-bold text-slate-900">{feature.title}</h3>
-                  <p className="mt-2 text-sm text-slate-600">{feature.copy}</p>
+                  <h3 className="frost-title mt-3 font-[var(--font-display)] text-lg font-bold">{feature.title}</h3>
+                  <p className="frost-subtitle mt-2 text-sm">{feature.copy}</p>
                 </article>
               );
             })}
@@ -179,36 +167,30 @@ export default function LandingPage() {
         </section>
 
         <section className="mx-auto mt-10 w-full max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-          <div className="rounded-3xl border border-cyan-100 bg-gradient-to-br from-white to-cyan-50 p-6 shadow-md sm:p-8">
+          <div className="frost-glass rounded-3xl p-6 sm:p-8">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="font-[var(--font-display)] text-2xl font-bold text-slate-900">How hospitals onboard in one shift</h2>
-                <p className="mt-1 text-sm text-slate-600">Simple implementation focused on nursing stations, ICU desks, and pharmacy counters.</p>
+                <h2 className="frost-title font-[var(--font-display)] text-2xl font-bold">How hospitals onboard in one shift</h2>
+                <p className="frost-subtitle mt-1 text-sm">Simple implementation focused on nursing stations, ICU desks, and pharmacy counters.</p>
               </div>
-              <Activity className="h-8 w-8 text-cyan-700" />
+              <Activity className="h-8 w-8 text-sky-700" />
             </div>
 
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               {steps.map((step, index) => (
-                <div key={step.title} className="rounded-2xl border border-cyan-100 bg-white p-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-cyan-700">Step {index + 1}</p>
-                  <h3 className="mt-2 font-[var(--font-display)] text-lg font-bold text-slate-900">{step.title}</h3>
-                  <p className="mt-2 text-sm text-slate-600">{step.text}</p>
+                <div key={step.title} className="frost-card rounded-2xl p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-sky-700">Step {index + 1}</p>
+                  <h3 className="frost-title mt-2 font-[var(--font-display)] text-lg font-bold">{step.title}</h3>
+                  <p className="frost-subtitle mt-2 text-sm">{step.text}</p>
                 </div>
               ))}
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/signup"
-                className="rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-200 transition hover:from-cyan-700 hover:to-sky-700"
-              >
+              <Link href="/signup" className="frost-btn-primary">
                 Start now
               </Link>
-              <Link
-                href="/login"
-                className="rounded-xl border border-cyan-200 bg-white px-5 py-3 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
-              >
+              <Link href="/login" className="frost-btn-secondary">
                 View dashboard demo
               </Link>
             </div>
@@ -216,10 +198,10 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-cyan-100 bg-white/80">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-sm text-slate-500 sm:px-6 lg:px-8">
+      <footer className="frost-layer border-t frost-divider bg-white/70">
+        <div className="frost-subtitle mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-sm sm:px-6 lg:px-8">
           <p>MedRadar for hospitals. Built for capacity planning and patient safety.</p>
-          <div className="inline-flex items-center gap-2 rounded-lg bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700">
+          <div className="frost-chip inline-flex items-center gap-2 rounded-lg px-3 py-1 text-xs font-semibold">
             <ShieldPlus className="h-4 w-4" /> Operational Demo Environment
           </div>
         </div>

@@ -3,14 +3,27 @@
 @tailwind utilities;
 
 :root {
-  --surface: 248 250 252;
-  --text: 15 23 42;
-  --primary: 8 145 178;
-  --primary-deep: 3 105 161;
+  --surface: 240 248 255;
+  --surface-strong: 227 241 255;
+  --surface-soft: 248 252 255;
+  --text: 14 33 59;
+  --text-muted: 82 112 143;
+  --border: 191 220 246;
+  --primary: 42 109 186;
+  --primary-strong: 28 84 152;
+  --accent: 103 176 235;
+  --danger: 211 67 87;
+  --warning: 183 128 46;
+  --success: 40 140 108;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
@@ -19,9 +32,11 @@ body {
   font-family: var(--font-body), "Segoe UI", sans-serif;
   color: rgb(var(--text));
   background:
-    radial-gradient(circle at 15% 15%, rgba(125, 211, 252, 0.2), transparent 35%),
-    radial-gradient(circle at 90% 10%, rgba(45, 212, 191, 0.17), transparent 32%),
-    linear-gradient(180deg, #f6fcff 0%, #f8fafc 100%);
+    radial-gradient(circle at 12% 10%, rgba(129, 199, 255, 0.32), transparent 38%),
+    radial-gradient(circle at 88% 4%, rgba(188, 226, 255, 0.36), transparent 36%),
+    radial-gradient(circle at 50% 100%, rgba(166, 205, 250, 0.2), transparent 42%),
+    linear-gradient(180deg, #eef7ff 0%, #f6fbff 52%, #edf7ff 100%);
+  background-attachment: fixed;
 }
 
 h1,
@@ -46,5 +61,314 @@ button {
 }
 
 ::selection {
-  background: rgba(6, 182, 212, 0.2);
+  background: rgba(103, 176, 235, 0.28);
+}
+
+.frost-shell {
+  position: relative;
+  min-height: 100vh;
+}
+
+.frost-shell::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(125deg, rgba(255, 255, 255, 0.35), transparent 30%),
+    repeating-linear-gradient(
+      150deg,
+      rgba(255, 255, 255, 0.12) 0px,
+      rgba(255, 255, 255, 0.12) 2px,
+      transparent 2px,
+      transparent 13px
+    );
+  opacity: 0.5;
+}
+
+.frost-layer {
+  position: relative;
+  z-index: 1;
+}
+
+.frost-glass {
+  border: 1px solid rgba(var(--border), 0.72);
+  background: linear-gradient(175deg, rgba(255, 255, 255, 0.94), rgba(237, 246, 255, 0.86));
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 20px 48px rgba(42, 109, 186, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.frost-card {
+  border: 1px solid rgba(var(--border), 0.7);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 30px rgba(42, 109, 186, 0.08);
+}
+
+.frost-card-soft {
+  border: 1px solid rgba(var(--border), 0.5);
+  background: rgba(var(--surface-soft), 0.9);
+}
+
+.frost-title {
+  color: rgb(var(--text));
+  letter-spacing: -0.01em;
+}
+
+.frost-subtitle {
+  color: rgb(var(--text-muted));
+}
+
+.frost-brand {
+  display: grid;
+  place-items: center;
+  border-radius: 0.9rem;
+  background: linear-gradient(145deg, rgb(var(--accent)), rgb(var(--primary)));
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(42, 109, 186, 0.24);
+}
+
+.frost-nav-link {
+  border: 1px solid rgba(var(--border), 0.62);
+  background: rgba(255, 255, 255, 0.78);
+  color: rgb(var(--text));
+}
+
+.frost-nav-link:hover {
+  border-color: rgba(var(--primary), 0.55);
+  background: rgba(234, 245, 255, 0.95);
+}
+
+.frost-nav-link.is-active {
+  border-color: rgba(var(--primary), 0.72);
+  background: linear-gradient(138deg, rgba(var(--primary), 0.95), rgba(var(--accent), 0.93));
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(42, 109, 186, 0.23);
+}
+
+.frost-chip {
+  border: 1px solid rgba(var(--border), 0.6);
+  background: rgba(236, 246, 255, 0.85);
+  color: rgb(var(--primary-strong));
+}
+
+.frost-chip-soft {
+  border: 1px solid rgba(var(--border), 0.4);
+  background: rgba(255, 255, 255, 0.7);
+  color: rgb(var(--text-muted));
+}
+
+.frost-btn-primary,
+.frost-btn-secondary,
+.frost-btn-danger,
+.frost-btn-neutral {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.18s ease;
+}
+
+.frost-btn-primary {
+  border: 1px solid rgba(var(--primary), 0.72);
+  background: linear-gradient(140deg, rgba(var(--primary), 0.98), rgba(var(--accent), 0.98));
+  color: #ffffff;
+  box-shadow: 0 12px 18px rgba(42, 109, 186, 0.24);
+}
+
+.frost-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 15px 22px rgba(42, 109, 186, 0.28);
+}
+
+.frost-btn-secondary {
+  border: 1px solid rgba(var(--border), 0.68);
+  background: rgba(255, 255, 255, 0.86);
+  color: rgb(var(--primary-strong));
+}
+
+.frost-btn-secondary:hover {
+  border-color: rgba(var(--primary), 0.6);
+  background: rgba(238, 247, 255, 0.96);
+}
+
+.frost-btn-danger {
+  border: 1px solid rgba(var(--danger), 0.3);
+  background: rgba(252, 235, 238, 0.92);
+  color: rgb(var(--danger));
+}
+
+.frost-btn-danger:hover {
+  border-color: rgba(var(--danger), 0.55);
+  background: rgba(253, 228, 232, 0.95);
+}
+
+.frost-btn-neutral {
+  border: 1px solid rgba(var(--text), 0.22);
+  background: rgb(var(--text));
+  color: #ffffff;
+}
+
+.frost-btn-neutral:hover {
+  background: rgba(var(--text), 0.92);
+}
+
+.frost-btn-primary:disabled,
+.frost-btn-secondary:disabled,
+.frost-btn-danger:disabled,
+.frost-btn-neutral:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.frost-input,
+.frost-select,
+.frost-textarea {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(var(--border), 0.78);
+  background: rgba(255, 255, 255, 0.86);
+  color: rgb(var(--text));
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.frost-input::placeholder,
+.frost-textarea::placeholder {
+  color: rgba(var(--text-muted), 0.75);
+}
+
+.frost-input:focus,
+.frost-select:focus,
+.frost-textarea:focus {
+  border-color: rgba(var(--primary), 0.85);
+  box-shadow: 0 0 0 3px rgba(var(--accent), 0.2);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.frost-alert,
+.frost-alert-danger,
+.frost-alert-warning,
+.frost-alert-success {
+  border-radius: 0.9rem;
+  border: 1px solid;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.frost-alert {
+  border-color: rgba(var(--border), 0.72);
+  background: rgba(235, 245, 255, 0.86);
+  color: rgb(var(--text));
+}
+
+.frost-alert-danger {
+  border-color: rgba(var(--danger), 0.3);
+  background: rgba(252, 235, 238, 0.9);
+  color: rgb(var(--danger));
+}
+
+.frost-alert-warning {
+  border-color: rgba(var(--warning), 0.34);
+  background: rgba(255, 246, 228, 0.92);
+  color: rgb(var(--warning));
+}
+
+.frost-alert-success {
+  border-color: rgba(var(--success), 0.38);
+  background: rgba(232, 249, 242, 0.9);
+  color: rgb(var(--success));
+}
+
+.frost-status,
+.frost-status-danger,
+.frost-status-warning,
+.frost-status-success,
+.frost-status-info {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.71rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.frost-status-danger {
+  background: rgba(252, 235, 238, 0.9);
+  color: rgb(var(--danger));
+}
+
+.frost-status-warning {
+  background: rgba(255, 246, 228, 0.9);
+  color: rgb(var(--warning));
+}
+
+.frost-status-success {
+  background: rgba(232, 249, 242, 0.9);
+  color: rgb(var(--success));
+}
+
+.frost-status-info {
+  background: rgba(229, 243, 255, 0.92);
+  color: rgb(var(--primary-strong));
+}
+
+.frost-divider {
+  border-color: rgba(var(--border), 0.72);
+}
+
+.frost-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.frost-table thead th {
+  border-bottom: 1px solid rgba(var(--border), 0.76);
+  padding: 0.55rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgb(var(--text-muted));
+}
+
+.frost-table tbody td {
+  border-bottom: 1px solid rgba(var(--border), 0.46);
+  padding: 0.6rem 0.5rem;
+  font-size: 0.875rem;
+  color: rgb(var(--text));
+}
+
+.frost-table tbody tr:hover td {
+  background: rgba(243, 250, 255, 0.72);
+}
+
+.frost-reveal {
+  animation: frostFade 380ms ease-out both;
+}
+
+@keyframes frostFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
