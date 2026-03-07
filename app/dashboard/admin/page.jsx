@@ -1,33 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { CheckCircle2, RotateCcw, Save } from "lucide-react";
 import PortalFrame from "@/components/portal-frame";
-import {
-  getAuditLog,
-  getResources,
-  getSettings,
-  resetDemoData,
-  saveSettings,
-} from "@/lib/medradarStore";
+import { resetDemoData, saveSettings } from "@/lib/medradarStore";
 import { useRequireSession } from "@/lib/useRequireSession";
+import { useMedRadarLiveData } from "@/lib/useMedRadarLiveData";
 
 export default function AdminPage() {
   const { session, ready } = useRequireSession();
-  const [settings, setSettings] = useState(null);
-  const [audit, setAudit] = useState([]);
-  const [resources, setResources] = useState(null);
+  const { resources, settings, audit, loaded, refresh } = useMedRadarLiveData({ includeAudit: true });
+  const [draftSettings, setDraftSettings] = useState(null);
   const [savedMessage, setSavedMessage] = useState("");
-
-  useEffect(() => {
-    if (!ready || !session) {
-      return;
-    }
-
-    setSettings(getSettings());
-    setAudit(getAuditLog().slice(0, 12));
-    setResources(getResources());
-  }, [ready, session]);
 
   const quickStats = useMemo(() => {
     if (!resources) {
@@ -48,22 +32,22 @@ export default function AdminPage() {
 
   const handleSave = (event) => {
     event.preventDefault();
-    saveSettings(settings, session.name);
-    setAudit(getAuditLog().slice(0, 12));
+    saveSettings(draftSettings ?? settings, session.name);
+    setDraftSettings(null);
+    refresh();
     setSavedMessage("Settings saved.");
     setTimeout(() => setSavedMessage(""), 2000);
   };
 
   const handleReset = () => {
     resetDemoData(session.name);
-    setResources(getResources());
-    setSettings(getSettings());
-    setAudit(getAuditLog().slice(0, 12));
+    setDraftSettings(null);
+    refresh();
     setSavedMessage("Demo data reset complete.");
     setTimeout(() => setSavedMessage(""), 2500);
   };
 
-  if (!ready || !session || !settings || !resources) {
+  if (!ready || !session || !loaded || !settings || !resources) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow">Loading admin panel...</div>
@@ -115,9 +99,12 @@ export default function AdminPage() {
                 type="number"
                 min="1"
                 max="100"
-                value={settings.bedOccupancyAlertPercent}
+                value={(draftSettings ?? settings).bedOccupancyAlertPercent}
                 onChange={(event) =>
-                  setSettings((prev) => ({ ...prev, bedOccupancyAlertPercent: Number(event.target.value) }))
+                  setDraftSettings((prev) => ({
+                    ...(prev ?? settings),
+                    bedOccupancyAlertPercent: Number(event.target.value),
+                  }))
                 }
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
               />
@@ -129,9 +116,12 @@ export default function AdminPage() {
                 type="number"
                 min="1"
                 max="100"
-                value={settings.oxygenReserveAlertPercent}
+                value={(draftSettings ?? settings).oxygenReserveAlertPercent}
                 onChange={(event) =>
-                  setSettings((prev) => ({ ...prev, oxygenReserveAlertPercent: Number(event.target.value) }))
+                  setDraftSettings((prev) => ({
+                    ...(prev ?? settings),
+                    oxygenReserveAlertPercent: Number(event.target.value),
+                  }))
                 }
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
               />
@@ -143,9 +133,12 @@ export default function AdminPage() {
                 type="number"
                 min="1"
                 max="30"
-                value={settings.medicineLowDays}
+                value={(draftSettings ?? settings).medicineLowDays}
                 onChange={(event) =>
-                  setSettings((prev) => ({ ...prev, medicineLowDays: Number(event.target.value) }))
+                  setDraftSettings((prev) => ({
+                    ...(prev ?? settings),
+                    medicineLowDays: Number(event.target.value),
+                  }))
                 }
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
               />
@@ -154,8 +147,13 @@ export default function AdminPage() {
             <label className="block">
               <span className="text-sm font-semibold text-slate-700">Shift lead</span>
               <input
-                value={settings.shiftLead}
-                onChange={(event) => setSettings((prev) => ({ ...prev, shiftLead: event.target.value }))}
+                value={(draftSettings ?? settings).shiftLead}
+                onChange={(event) =>
+                  setDraftSettings((prev) => ({
+                    ...(prev ?? settings),
+                    shiftLead: event.target.value,
+                  }))
+                }
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
               />
             </label>
@@ -163,8 +161,13 @@ export default function AdminPage() {
             <label className="block">
               <span className="text-sm font-semibold text-slate-700">Escalation contact</span>
               <input
-                value={settings.escalationContact}
-                onChange={(event) => setSettings((prev) => ({ ...prev, escalationContact: event.target.value }))}
+                value={(draftSettings ?? settings).escalationContact}
+                onChange={(event) =>
+                  setDraftSettings((prev) => ({
+                    ...(prev ?? settings),
+                    escalationContact: event.target.value,
+                  }))
+                }
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
               />
             </label>
@@ -184,7 +187,7 @@ export default function AdminPage() {
           <p className="mt-1 text-xs text-slate-500">Recent actions across login, inventory changes, and admin updates.</p>
 
           <div className="mt-4 max-h-[420px] space-y-2 overflow-auto pr-1">
-            {audit.map((entry) => (
+            {audit.slice(0, 12).map((entry) => (
               <div key={entry.id} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm">
                 <p className="font-semibold text-slate-900">{entry.action}</p>
                 <p className="text-xs text-slate-500">

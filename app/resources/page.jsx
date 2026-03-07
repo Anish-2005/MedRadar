@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Download, Plus, Save, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  AlertCircle,
+  Download,
+  Plus,
+  RefreshCw,
+  Save,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import PortalFrame from "@/components/portal-frame";
-import { getResources, saveResources } from "@/lib/medradarStore";
+import { importResources, saveResources } from "@/lib/medradarStore";
+import { useMedRadarLiveData } from "@/lib/useMedRadarLiveData";
 import { useRequireSession } from "@/lib/useRequireSession";
 
 const TABS = [
@@ -99,8 +108,19 @@ function validateForm(tab, form) {
   return "";
 }
 
+function utilizationBadge(percent) {
+  if (percent >= 90) {
+    return "bg-rose-100 text-rose-700";
+  }
+  if (percent >= 75) {
+    return "bg-amber-100 text-amber-700";
+  }
+  return "bg-emerald-100 text-emerald-700";
+}
+
 export default function ResourcesPage() {
   const { session, ready } = useRequireSession();
+  const { resources: liveResources, loaded, refresh } = useMedRadarLiveData();
   const [resources, setResources] = useState(null);
   const [activeTab, setActiveTab] = useState("beds");
   const [search, setSearch] = useState("");
@@ -108,13 +128,18 @@ export default function ResourcesPage() {
   const [form, setForm] = useState(buildEmptyForm("beds"));
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [lastSyncAt, setLastSyncAt] = useState(nowTime());
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (!ready || !session) {
+    if (!ready || !session || !loaded || !liveResources) {
       return;
     }
-    setResources(getResources());
-  }, [ready, session]);
+
+    setResources(liveResources);
+    setLastSyncAt(nowTime());
+  }, [ready, session, loaded, liveResources]);
 
   useEffect(() => {
     setForm(buildEmptyForm(activeTab));
@@ -154,15 +179,25 @@ export default function ResourcesPage() {
 
     return [
       { label: "Beds in system", value: bedsTotal },
-      { label: "Beds occupied", value: bedsOccupied },
+      { label: "Bed occupancy", value: `${bedsOccupied}/${bedsTotal}` },
       { label: "Oxygen reserve", value: `${oxygenAvailable}/${oxygenCapacity} L` },
       { label: "Low medicines", value: medicinesLow },
     ];
   }, [resources]);
 
-  const persist = (nextResources) => {
+  const clearFeedbackLater = (message, type = "success") => {
+    setFeedback({ message, type });
+    window.setTimeout(() => setFeedback(null), 2500);
+  };
+
+  const persist = (nextResources, message) => {
     setResources(nextResources);
     saveResources(nextResources, session.name);
+    setLastSyncAt(nowTime());
+    refresh();
+    if (message) {
+      clearFeedbackLater(message, "success");
+    }
   };
 
   const handleSave = (event) => {
@@ -180,7 +215,7 @@ export default function ResourcesPage() {
       : [item, ...collection];
 
     const nextResources = { ...resources, [activeTab]: nextCollection };
-    persist(nextResources);
+    persist(nextResources, editingId ? "Row updated." : "Row added.");
 
     setForm(buildEmptyForm(activeTab));
     setEditingId(null);
@@ -196,8 +231,13 @@ export default function ResourcesPage() {
   };
 
   const handleDelete = (id) => {
+    const ok = window.confirm("Delete this row from resource inventory?");
+    if (!ok) {
+      return;
+    }
+
     const nextCollection = collection.filter((row) => row.id !== id);
-    persist({ ...resources, [activeTab]: nextCollection });
+    persist({ ...resources, [activeTab]: nextCollection }, "Row deleted.");
 
     if (editingId === id) {
       setEditingId(null);
@@ -219,9 +259,47 @@ export default function ResourcesPage() {
     link.download = `medradar-resources-${Date.now()}.json`;
     link.click();
     URL.revokeObjectURL(link.href);
+    clearFeedbackLater("Resource snapshot exported.", "success");
   };
 
-  if (!ready || !session || !resources) {
+  const openImportPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const content = await file.text();
+      const parsed = JSON.parse(content);
+      const result = importResources(parsed, session.name);
+
+      if (!result.ok) {
+        setFeedback({ type: "error", message: result.message });
+        return;
+      }
+
+      setResources(result.resources);
+      setLastSyncAt(nowTime());
+      refresh();
+      clearFeedbackLater(result.message, "success");
+    } catch {
+      setFeedback({ type: "error", message: "Failed to import file. Upload valid JSON." });
+    }
+  };
+
+  const handleManualRefresh = () => {
+    refresh();
+    setLastSyncAt(nowTime());
+    clearFeedbackLater("Resource data refreshed.", "success");
+  };
+
+  if (!ready || !session || !loaded || !resources) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow">Loading resource desk...</div>
@@ -235,16 +313,59 @@ export default function ResourcesPage() {
       subtitle="Maintain live inventory for beds, oxygen, and medicines across the facility."
       session={session}
       rightSlot={
-        <button
-          type="button"
-          onClick={exportData}
-          className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
-        >
-          <Download className="h-4 w-4" />
-          Export JSON
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleManualRefresh}
+            className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </button>
+          <button
+            type="button"
+            onClick={openImportPicker}
+            className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
+          >
+            <Upload className="h-4 w-4" />
+            Import JSON
+          </button>
+          <button
+            type="button"
+            onClick={exportData}
+            className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
+          >
+            <Download className="h-4 w-4" />
+            Export JSON
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+        </div>
       }
     >
+      <section className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+        <p>Last sync at {lastSyncAt}</p>
+        <p>Operator: {session.name}</p>
+      </section>
+
+      {feedback ? (
+        <section
+          className={`mb-4 flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+            feedback.type === "error"
+              ? "border-rose-200 bg-rose-50 text-rose-700"
+              : "border-emerald-200 bg-emerald-50 text-emerald-700"
+          }`}
+        >
+          <AlertCircle className="h-4 w-4" />
+          {feedback.message}
+        </section>
+      ) : null}
+
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map((card) => (
           <article key={card.label} className="rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
@@ -459,6 +580,7 @@ export default function ResourcesPage() {
                     <th className="px-2 py-2">Ward</th>
                     <th className="px-2 py-2">Total</th>
                     <th className="px-2 py-2">Occupied</th>
+                    <th className="px-2 py-2">Utilization</th>
                     <th className="px-2 py-2">Updated</th>
                     <th className="px-2 py-2">Actions</th>
                   </>
@@ -481,6 +603,7 @@ export default function ResourcesPage() {
                     <th className="px-2 py-2">Stock</th>
                     <th className="px-2 py-2">Threshold</th>
                     <th className="px-2 py-2">Daily use</th>
+                    <th className="px-2 py-2">Runway</th>
                     <th className="px-2 py-2">Unit</th>
                     <th className="px-2 py-2">Actions</th>
                   </>
@@ -488,6 +611,17 @@ export default function ResourcesPage() {
               </tr>
             </thead>
             <tbody>
+              {!filteredCollection.length ? (
+                <tr>
+                  <td
+                    colSpan={activeTab === "medicines" ? 7 : activeTab === "oxygen" ? 6 : 6}
+                    className="px-2 py-6 text-center text-sm text-slate-500"
+                  >
+                    No rows match the current search.
+                  </td>
+                </tr>
+              ) : null}
+
               {filteredCollection.map((item) => (
                 <tr key={item.id} className="border-b border-slate-100 text-slate-700">
                   {activeTab === "beds" ? (
@@ -495,6 +629,15 @@ export default function ResourcesPage() {
                       <td className="px-2 py-2 font-semibold text-slate-900">{item.ward}</td>
                       <td className="px-2 py-2">{item.total}</td>
                       <td className="px-2 py-2">{item.occupied}</td>
+                      <td className="px-2 py-2">
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-semibold ${utilizationBadge(
+                            Math.round((item.occupied / item.total) * 100)
+                          )}`}
+                        >
+                          {Math.round((item.occupied / item.total) * 100)}%
+                        </span>
+                      </td>
                       <td className="px-2 py-2">{item.lastUpdated}</td>
                     </>
                   ) : null}
@@ -527,6 +670,9 @@ export default function ResourcesPage() {
                       <td className="px-2 py-2">{item.stock}</td>
                       <td className="px-2 py-2">{item.threshold}</td>
                       <td className="px-2 py-2">{item.dailyUse}</td>
+                      <td className="px-2 py-2">
+                        {item.dailyUse > 0 ? `${(item.stock / item.dailyUse).toFixed(1)} days` : "N/A"}
+                      </td>
                       <td className="px-2 py-2">{item.unit}</td>
                     </>
                   ) : null}
