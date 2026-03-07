@@ -4,12 +4,12 @@ import {
   AlertTriangle,
   Bed,
   Building2,
-  HeartPulse,
   ShieldPlus,
   Syringe,
   Waves,
 } from "lucide-react";
 import { DEFAULT_FORECAST, DEFAULT_RESOURCES } from "@/lib/medradarData";
+import MedRadarLogo from "@/components/medradar-logo";
 
 const featureCards = [
   {
@@ -63,15 +63,7 @@ export default function LandingPage() {
     <div className="frost-shell">
       <header className="frost-layer border-b frost-divider bg-white/70 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="frost-brand h-11 w-11">
-              <HeartPulse className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="frost-title font-[var(--font-display)] text-xl font-bold">MedRadar</p>
-              <p className="frost-subtitle text-xs">Hospital Resource Optimizer</p>
-            </div>
-          </div>
+          <MedRadarLogo />
 
           <nav className="flex items-center gap-2">
             <Link href="/login" className="frost-btn-secondary">

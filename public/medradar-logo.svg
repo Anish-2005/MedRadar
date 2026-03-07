@@ -1,0 +1,20 @@
+<svg width="128" height="128" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="medradar-bg" x1="7" y1="6" x2="57" y2="59" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#DDF2FF" />
+      <stop offset="45%" stop-color="#67B0EB" />
+      <stop offset="100%" stop-color="#0A3968" />
+    </linearGradient>
+    <linearGradient id="medradar-crystal" x1="17" y1="12" x2="43" y2="45" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#BFE4FF" stop-opacity="0.18" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#medradar-bg)" />
+  <path d="M32 10L47 22L41 45H23L17 22L32 10Z" fill="url(#medradar-crystal)" />
+  <path d="M19 24L32 15L45 24" stroke="#ECF8FF" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.75" />
+  <path d="M26 27H31V22H33V27H38V29H33V34H31V29H26V27Z" fill="#F7FDFF" />
+  <path d="M13 41H20L24 34L30 45L36 36L39 41H51" stroke="#F7FDFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="46.5" cy="15.5" r="1.4" fill="#F4FCFF" />
+  <circle cx="50.5" cy="20.5" r="0.95" fill="#E2F5FF" />
+</svg>

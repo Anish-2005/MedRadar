@@ -7,10 +7,10 @@ import {
   Boxes,
   LogOut,
   ShieldCheck,
-  Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/client/api";
+import MedRadarLogo from "@/components/medradar-logo";
 
 const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Command Center", icon: Activity },
@@ -41,15 +41,10 @@ export default function PortalFrame({ title, subtitle, session, children, rightS
       <header className="frost-layer border-b frost-divider bg-white/65 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="frost-brand h-11 w-11">
-                <Stethoscope className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="frost-title font-[var(--font-display)] text-lg font-semibold">MedRadar</p>
-                <p className="frost-subtitle text-xs">Hospital Resource Optimizer</p>
-              </div>
-            </div>
+            <MedRadarLogo
+              titleClassName="text-lg font-semibold"
+              subtitleClassName="text-xs"
+            />
 
             <div className="flex items-center gap-3">
               <div className="frost-card-soft hidden rounded-xl px-3 py-2 text-right sm:block">

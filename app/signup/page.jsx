@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Hospital, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { ApiError, getSession, signup } from "@/lib/client/api";
 import { ROLE_OPTIONS } from "@/lib/shared/roles";
+import { MedRadarMark } from "@/components/medradar-logo";
 
 const EMPTY_FORM = {
   name: "",
@@ -79,9 +80,7 @@ export default function SignupPage() {
     <div className="frost-shell flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
       <div className="frost-layer frost-glass w-full max-w-2xl rounded-3xl p-6 sm:p-8">
         <div className="mb-6 text-center">
-          <div className="frost-brand mx-auto h-14 w-14 rounded-2xl">
-            <Hospital className="h-7 w-7" />
-          </div>
+          <MedRadarMark className="mx-auto h-14 w-14" />
           <h1 className="frost-title mt-4 font-[var(--font-display)] text-3xl font-black">Hospital Onboarding</h1>
           <p className="frost-subtitle mt-1 text-sm">Create a secure operations workspace for your facility.</p>
         </div>
