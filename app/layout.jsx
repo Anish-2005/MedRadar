@@ -1,16 +1,16 @@
-import { Nunito_Sans, Urbanist } from "next/font/google";
+import { Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const bodyFont = Nunito_Sans({
+const bodyFont = Manrope({
   subsets: ["latin"],
   variable: "--font-body",
-  weight: ["400", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const displayFont = Urbanist({
+const displayFont = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["600", "700", "800", "900"],
+  weight: ["500", "600", "700"],
 });
 
 export const metadata = {
