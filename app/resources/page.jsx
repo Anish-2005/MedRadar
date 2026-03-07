@@ -1,683 +1,556 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Head from 'next/head';
-import { motion } from 'framer-motion';
-import { FiAlertTriangle, FiPlus, FiRefreshCw, FiDownload, FiUpload, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp, FiSearch } from 'react-icons/fi';
+import { useEffect, useMemo, useState } from "react";
+import { Download, Plus, Save, Trash2 } from "lucide-react";
+import PortalFrame from "@/components/portal-frame";
+import { getResources, saveResources } from "@/lib/medradarStore";
+import { useRequireSession } from "@/lib/useRequireSession";
 
-export default function Resources() {
-    const [activeTab, setActiveTab] = useState('beds');
-    const [isLoading, setIsLoading] = useState(true);
-    const [darkMode, setDarkMode] = useState(false);
-    const [expandedSection, setExpandedSection] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const router = useRouter();
+const TABS = [
+  { id: "beds", label: "Beds" },
+  { id: "oxygen", label: "Oxygen" },
+  { id: "medicines", label: "Medicines" },
+];
 
-    // Mock data - replace with real API calls
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 1000);
+function nowTime() {
+  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+}
 
-        return () => clearTimeout(timer);
-    }, []);
+function buildEmptyForm(tab) {
+  if (tab === "beds") {
+    return { ward: "", total: "", occupied: "", lastUpdated: nowTime() };
+  }
 
-    // Sync with system dark mode preference so themes feel consistent with dashboard
-    useEffect(() => {
-        if (typeof window === 'undefined' || !window.matchMedia) return;
-        const mq = window.matchMedia('(prefers-color-scheme: dark)');
-        setDarkMode(mq.matches);
-        const handler = (e) => setDarkMode(e.matches);
-        // use addEventListener when available
-        if (mq.addEventListener) mq.addEventListener('change', handler);
-        else mq.addListener(handler);
-        return () => {
-            if (mq.removeEventListener) mq.removeEventListener('change', handler);
-            else mq.removeListener(handler);
-        };
-    }, []);
+  if (tab === "oxygen") {
+    return { source: "", capacity: "", available: "", flowRateLph: "", status: "normal" };
+  }
 
-    const resourceData = {
-        beds: {
-            summary: {
-                total: 150,
-                occupied: 112,
-                available: 38,
-                occupancyRate: 75,
-                icu: { total: 20, occupied: 19, available: 1 },
-                isolation: { total: 15, occupied: 8, available: 7 },
-                pediatric: { total: 10, occupied: 5, available: 5 },
-                maternity: { total: 8, occupied: 3, available: 5 }
-            },
-            details: [
-                { id: 1, ward: 'General Ward', total: 97, occupied: 77, available: 20, lastUpdated: '10 mins ago' },
-                { id: 2, ward: 'ICU', total: 20, occupied: 19, available: 1, lastUpdated: '5 mins ago' },
-                { id: 3, ward: 'Isolation', total: 15, occupied: 8, available: 7, lastUpdated: '15 mins ago' },
-                { id: 4, ward: 'Pediatric', total: 10, occupied: 5, available: 5, lastUpdated: '20 mins ago' },
-                { id: 5, ward: 'Maternity', total: 8, occupied: 3, available: 5, lastUpdated: '30 mins ago' }
-            ],
-            history: [
-                { date: 'Today', time: '08:00 AM', action: 'Patient discharge', ward: 'General', bedsChanged: +2 },
-                { date: 'Today', time: '07:30 AM', action: 'New admission', ward: 'ICU', bedsChanged: -1 },
-                { date: 'Yesterday', time: '11:45 PM', action: 'Patient transfer', ward: 'Isolation', bedsChanged: +1 },
-                { date: 'Yesterday', time: '09:20 PM', action: 'Emergency admission', ward: 'General', bedsChanged: -1 }
-            ]
-        },
-        oxygen: {
-            summary: {
-                capacity: 5000, // liters
-                remaining: 1250,
-                usageRate: '250L/hr',
-                estimatedRemaining: '5 hours',
-                cylinders: { total: 50, inUse: 32, available: 18 },
-                tanks: { total: 4, inUse: 3, available: 1 }
-            },
-            details: [
-                { id: 1, type: 'Cylinder (40L)', total: 50, inUse: 32, available: 18, status: 'Normal' },
-                { id: 2, type: 'Bulk Tank (1000L)', total: 4, inUse: 3, available: 1, status: 'Critical' }
-            ],
-            history: [
-                { date: 'Today', time: '06:00 AM', action: 'Cylinder refill', quantity: 10, staff: 'Nurse Roy' },
-                { date: 'Yesterday', time: '10:30 PM', action: 'Tank replenishment', quantity: 2000, staff: 'Dr. Sharma' },
-                { date: 'Yesterday', time: '04:15 PM', action: 'Cylinder usage', quantity: -5, staff: 'Auto' }
-            ]
-        },
-        medicines: {
-            summary: {
-                criticalItems: 4,
-                lowStock: 2,
-                adequateStock: 5
-            },
-            details: [
-                {
-                    id: 1,
-                    name: 'Antibiotics (Ceftriaxone)',
-                    stock: 150,
-                    threshold: 50,
-                    status: 'Adequate',
-                    usageRate: '25/day',
-                    estimatedDepletion: '6 days'
-                },
-                {
-                    id: 2,
-                    name: 'Antivirals (Remdesivir)',
-                    stock: 85,
-                    threshold: 30,
-                    status: 'Adequate',
-                    usageRate: '15/day',
-                    estimatedDepletion: '5.6 days'
-                },
-                {
-                    id: 3,
-                    name: 'Analgesics (Paracetamol)',
-                    stock: 320,
-                    threshold: 100,
-                    status: 'Adequate',
-                    usageRate: '40/day',
-                    estimatedDepletion: '8 days'
-                },
-                {
-                    id: 4,
-                    name: 'Sedatives (Midazolam)',
-                    stock: 42,
-                    threshold: 20,
-                    status: 'Low',
-                    usageRate: '8/day',
-                    estimatedDepletion: '5.2 days'
-                },
-                {
-                    id: 5,
-                    name: 'Vasopressors (Noradrenaline)',
-                    stock: 18,
-                    threshold: 15,
-                    status: 'Critical',
-                    usageRate: '3/day',
-                    estimatedDepletion: '6 days'
-                }
-            ],
-            history: [
-                { date: 'Today', time: '08:30 AM', action: 'New delivery', item: 'Paracetamol', quantity: 100, staff: 'Pharm. Kumar' },
-                { date: 'Yesterday', time: '04:00 PM', action: 'Usage', item: 'Remdesivir', quantity: -12, staff: 'Auto' },
-                { date: 'Yesterday', time: '11:00 AM', action: 'Adjustment', item: 'Midazolam', quantity: +5, staff: 'Pharm. Singh' }
-            ]
-        }
+  return { name: "", stock: "", threshold: "", dailyUse: "", unit: "vials" };
+}
+
+function buildItemFromForm(tab, form, existingId) {
+  if (tab === "beds") {
+    return {
+      id: existingId ?? `bed-${Date.now()}`,
+      ward: form.ward.trim(),
+      total: Number(form.total),
+      occupied: Number(form.occupied),
+      lastUpdated: form.lastUpdated || nowTime(),
     };
+  }
 
-    const toggleSection = (section) => {
-        if (expandedSection === section) {
-            setExpandedSection(null);
-        } else {
-            setExpandedSection(section);
-        }
+  if (tab === "oxygen") {
+    return {
+      id: existingId ?? `oxy-${Date.now()}`,
+      source: form.source.trim(),
+      capacity: Number(form.capacity),
+      available: Number(form.available),
+      flowRateLph: Number(form.flowRateLph),
+      status: form.status,
     };
+  }
 
-    const handleAddResource = () => {
-        // Implement add resource logic
-        console.log(`Add new ${activeTab} resource`);
-    };
+  return {
+    id: existingId ?? `med-${Date.now()}`,
+    name: form.name.trim(),
+    stock: Number(form.stock),
+    threshold: Number(form.threshold),
+    dailyUse: Number(form.dailyUse),
+    unit: form.unit.trim() || "units",
+  };
+}
 
-    const handleRefresh = () => {
-        setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-            setSearchTerm('');
-        }, 800);
-    };
+function validateForm(tab, form) {
+  if (tab === "beds") {
+    if (!form.ward.trim()) {
+      return "Ward name is required.";
+    }
+    if (Number(form.total) <= 0) {
+      return "Total beds must be greater than 0.";
+    }
+    if (Number(form.occupied) < 0 || Number(form.occupied) > Number(form.total)) {
+      return "Occupied beds must be between 0 and total beds.";
+    }
+    return "";
+  }
 
-    const handleExport = () => {
-        // Implement export logic
-        console.log(`Export ${activeTab} data`);
-    };
+  if (tab === "oxygen") {
+    if (!form.source.trim()) {
+      return "Source name is required.";
+    }
+    if (Number(form.capacity) <= 0) {
+      return "Capacity must be greater than 0.";
+    }
+    if (Number(form.available) < 0 || Number(form.available) > Number(form.capacity)) {
+      return "Available oxygen must be between 0 and capacity.";
+    }
+    if (Number(form.flowRateLph) < 0) {
+      return "Flow rate cannot be negative.";
+    }
+    return "";
+  }
 
-    const handleImport = () => {
-        // Implement import logic
-        console.log(`Import ${activeTab} data`);
-    };
+  if (!form.name.trim()) {
+    return "Medicine name is required.";
+  }
+  if (Number(form.stock) < 0 || Number(form.threshold) < 0 || Number(form.dailyUse) < 0) {
+    return "Stock, threshold, and daily use cannot be negative.";
+  }
+  return "";
+}
 
-    const renderTabContent = () => {
-        switch (activeTab) {
-            case 'beds':
-                // filter by search term (matches ward)
-                const filteredBeds = resourceData.beds.details.filter((w) => w.ward.toLowerCase().includes(searchTerm.toLowerCase()));
+export default function ResourcesPage() {
+  const { session, ready } = useRequireSession();
+  const [resources, setResources] = useState(null);
+  const [activeTab, setActiveTab] = useState("beds");
+  const [search, setSearch] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(buildEmptyForm("beds"));
+  const [error, setError] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
-                return (
-                    <div className="space-y-6">
-                        {/* Bed Summary Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Total Beds</h3>
-                                <p className={`text-2xl font-bold mt-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {resourceData.beds.summary.total}
-                                </p>
-                            </div>
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Occupied Beds</h3>
-                                <p className={`text-2xl font-bold mt-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {resourceData.beds.summary.occupied} <span className="text-sm font-normal text-gray-500">({resourceData.beds.summary.occupancyRate}%)</span>
-                                </p>
-                            </div>
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Available Beds</h3>
-                                <p className={`text-2xl font-bold mt-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {resourceData.beds.summary.available}
-                                </p>
-                            </div>
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>ICU Availability</h3>
-                                <p className={`text-2xl font-bold mt-1 ${resourceData.beds.summary.icu.available === 0 ? 'text-red-500' : darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {resourceData.beds.summary.icu.available}/{resourceData.beds.summary.icu.total}
-                                </p>
-                            </div>
-                        </div>
+  useEffect(() => {
+    if (!ready || !session) {
+      return;
+    }
+    setResources(getResources());
+  }, [ready, session]);
 
-                        {/* Bed Details */}
-                        <div className={`rounded-lg shadow overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                            <div
-                                className={`flex justify-between items-center p-4 cursor-pointer ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
-                                onClick={() => toggleSection('bedDetails')}
-                            >
-                                <h2 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Bed Details by Ward</h2>
-                                {expandedSection === 'bedDetails' ? <FiChevronUp className="text-gray-500" /> : <FiChevronDown className="text-gray-500" />}
-                            </div>
+  useEffect(() => {
+    setForm(buildEmptyForm(activeTab));
+    setEditingId(null);
+    setError("");
+    setShowForm(false);
+  }, [activeTab]);
 
-                            {expandedSection === 'bedDetails' && (
-                                <div className="border-t border-gray-200 dark:border-gray-700">
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                            <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                                <tr>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Ward</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Total</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Occupied</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Available</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Last Updated</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                                {(filteredBeds.length > 0 ? filteredBeds : resourceData.beds.details).map((ward) => (
-                                                    <tr key={ward.id}>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{ward.ward}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{ward.total}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${ward.occupied === ward.total ? 'text-red-500' : darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                                            {ward.occupied}
-                                                        </td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${ward.available === 0 ? 'text-red-500' : darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                                            {ward.available}
-                                                        </td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{ward.lastUpdated}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                            <button className={`mr-2 ${darkMode ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500'}`}>
-                                                                <FiEdit2 />
-                                                            </button>
-                                                            <button className={darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-500'}>
-                                                                <FiTrash2 />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div className={`px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                        <div className="flex-1 flex justify-between items-center">
-                                            <button
-                                                onClick={handleAddResource}
-                                                className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${darkMode ? 'ring-offset-gray-800' : ''}`}
-                                            >
-                                                <FiPlus className="mr-1" /> Add Ward
-                                            </button>
-                                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
-                                                Showing <span className="font-medium">1</span> to <span className="font-medium">{resourceData.beds.details.length}</span> of{' '}
-                                                <span className="font-medium">{resourceData.beds.details.length}</span> wards
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+  const collection = resources?.[activeTab] ?? [];
 
-                        {/* Bed History */}
-                        <div className={`rounded-lg shadow overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                            <div
-                                className={`flex justify-between items-center p-4 cursor-pointer ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
-                                onClick={() => toggleSection('bedHistory')}
-                            >
-                                <h2 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recent Bed Changes</h2>
-                                {expandedSection === 'bedHistory' ? <FiChevronUp className="text-gray-500" /> : <FiChevronDown className="text-gray-500" />}
-                            </div>
+  const filteredCollection = useMemo(() => {
+    if (!search.trim()) {
+      return collection;
+    }
 
-                            {expandedSection === 'bedHistory' && (
-                                <div className="border-t border-gray-200 dark:border-gray-700">
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                            <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                                <tr>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Date</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Time</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Action</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Ward</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Beds Changed</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                                {resourceData.beds.history.map((entry, index) => (
-                                                    <tr key={index}>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{entry.date}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{entry.time}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{entry.action}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{entry.ward}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${entry.bedsChanged > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                                            {entry.bedsChanged > 0 ? '+' : ''}{entry.bedsChanged}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            case 'oxygen':
-                const filteredOxygen = resourceData.oxygen.details.filter((d) => d.type.toLowerCase().includes(searchTerm.toLowerCase()));
-
-                return (
-                    <div className="space-y-6">
-                        {/* Oxygen Summary Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Total Capacity</h3>
-                                <p className={`text-2xl font-bold mt-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {(resourceData.oxygen.summary.capacity / 1000).toFixed(1)}k L
-                                </p>
-                            </div>
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Remaining</h3>
-                                <p className={`text-2xl font-bold mt-1 ${resourceData.oxygen.summary.remaining < 1000 ? 'text-red-500' : darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {(resourceData.oxygen.summary.remaining / 1000).toFixed(1)}k L
-                                </p>
-                            </div>
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Usage Rate</h3>
-                                <p className={`text-2xl font-bold mt-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {resourceData.oxygen.summary.usageRate}
-                                </p>
-                            </div>
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Estimated Remaining</h3>
-                                <p className={`text-2xl font-bold mt-1 ${resourceData.oxygen.summary.estimatedRemaining.includes('hour') ? 'text-red-500' : darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {resourceData.oxygen.summary.estimatedRemaining}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Oxygen Details */}
-                        <div className={`rounded-lg shadow overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                            <div
-                                className={`flex justify-between items-center p-4 cursor-pointer ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
-                                onClick={() => toggleSection('oxygenDetails')}
-                            >
-                                <h2 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Oxygen Supply Details</h2>
-                                {expandedSection === 'oxygenDetails' ? <FiChevronUp className="text-gray-500" /> : <FiChevronDown className="text-gray-500" />}
-                            </div>
-
-                            {expandedSection === 'oxygenDetails' && (
-                                <div className="border-t border-gray-200 dark:border-gray-700">
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                            <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                                <tr>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Type</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Total</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>In Use</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Available</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Status</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                                {(filteredOxygen.length > 0 ? filteredOxygen : resourceData.oxygen.details).map((type) => (
-                                                    <tr key={type.id}>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{type.type}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{type.total}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{type.inUse}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${type.available === 0 ? 'text-red-500' : darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                                            {type.available}
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${type.status === 'Critical'
-                                                                    ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                                                }`}>
-                                                                {type.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                            <button className={`mr-2 ${darkMode ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500'}`}>
-                                                                <FiEdit2 />
-                                                            </button>
-                                                            <button className={darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-500'}>
-                                                                <FiTrash2 />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div className={`px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                        <div className="flex-1 flex justify-between items-center">
-                                            <button
-                                                onClick={handleAddResource}
-                                                className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${darkMode ? 'ring-offset-gray-800' : ''}`}
-                                            >
-                                                <FiPlus className="mr-1" /> Add Supply
-                                            </button>
-                                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
-                                                Showing <span className="font-medium">1</span> to <span className="font-medium">{resourceData.oxygen.details.length}</span> of{' '}
-                                                <span className="font-medium">{resourceData.oxygen.details.length}</span> types
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Oxygen History */}
-                        <div className={`rounded-lg shadow overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                            <div
-                                className={`flex justify-between items-center p-4 cursor-pointer ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
-                                onClick={() => toggleSection('oxygenHistory')}
-                            >
-                                <h2 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Oxygen Usage History</h2>
-                                {expandedSection === 'oxygenHistory' ? <FiChevronUp className="text-gray-500" /> : <FiChevronDown className="text-gray-500" />}
-                            </div>
-
-                            {expandedSection === 'oxygenHistory' && (
-                                <div className="border-t border-gray-200 dark:border-gray-700">
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                            <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                                <tr>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Date</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Time</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Action</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Quantity (L)</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Staff</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                                {resourceData.oxygen.history.map((entry, index) => (
-                                                    <tr key={index}>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{entry.date}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{entry.time}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{entry.action}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${entry.quantity > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                                            {entry.quantity > 0 ? '+' : ''}{entry.quantity}
-                                                        </td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{entry.staff}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            case 'medicines':
-                const filteredMeds = resourceData.medicines.details.filter((m) => m.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-                return (
-                    <div className="space-y-6">
-                        {/* Medicine Summary Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Critical Items</h3>
-                                <p className={`text-2xl font-bold mt-1 ${resourceData.medicines.summary.criticalItems > 0 ? 'text-red-500' : darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {resourceData.medicines.summary.criticalItems}
-                                </p>
-                            </div>
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Low Stock Items</h3>
-                                <p className={`text-2xl font-bold mt-1 ${resourceData.medicines.summary.lowStock > 0 ? 'text-amber-500' : darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {resourceData.medicines.summary.lowStock}
-                                </p>
-                            </div>
-                            <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Adequate Stock</h3>
-                                <p className={`text-2xl font-bold mt-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    {resourceData.medicines.summary.adequateStock}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Medicine Details */}
-                        <div className={`rounded-lg shadow overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                            <div
-                                className={`flex justify-between items-center p-4 cursor-pointer ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
-                                onClick={() => toggleSection('medicineDetails')}
-                            >
-                                <h2 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Medicine Stock Details</h2>
-                                {expandedSection === 'medicineDetails' ? <FiChevronUp className="text-gray-500" /> : <FiChevronDown className="text-gray-500" />}
-                            </div>
-
-                            {expandedSection === 'medicineDetails' && (
-                                <div className="border-t border-gray-200 dark:border-gray-700">
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                            <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                                <tr>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Medicine</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Current Stock</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Threshold</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Status</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Usage Rate</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Estimated Depletion</th>
-                                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                                {(filteredMeds.length > 0 ? filteredMeds : resourceData.medicines.details).map((medicine) => (
-                                                    <tr key={medicine.id}>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{medicine.name}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${medicine.stock < medicine.threshold
-                                                                ? 'text-red-500'
-                                                                : darkMode
-                                                                    ? 'text-white'
-                                                                    : 'text-gray-900'
-                                                            }`}>{medicine.stock}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{medicine.threshold}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm`}>
-                                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${medicine.status === 'Critical'
-                                                                    ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                                                    : medicine.status === 'Low'
-                                                                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                                                                        : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                                                }`}>
-                                                                {medicine.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{medicine.usageRate}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{medicine.estimatedDepletion}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                            <button className={`mr-2 ${darkMode ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500'}`}>
-                                                                <FiEdit2 />
-                                                            </button>
-                                                            <button className={darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-500'}>
-                                                                <FiTrash2 />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div className={`px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                        <div className="flex-1 flex justify-between items-center">
-                                            <button
-                                                onClick={handleAddResource}
-                                                className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${darkMode ? 'ring-offset-gray-800' : ''}`}
-                                            >
-                                                <FiPlus className="mr-1" /> Add Medicine
-                                            </button>
-                                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
-                                                Showing <span className="font-medium">1</span> to <span className="font-medium">{resourceData.medicines.details.length}</span> of{' '}
-                                                <span className="font-medium">{resourceData.medicines.details.length}</span> items
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Medicine History */}
-                        <div className={`rounded-lg shadow overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                            <div
-                                className={`flex justify-between items-center p-4 cursor-pointer ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
-                                onClick={() => toggleSection('medicineHistory')}
-                            >
-                                <h2 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recent Medicine Activity</h2>
-                                {expandedSection === 'medicineHistory' ? <FiChevronUp className="text-gray-500" /> : <FiChevronDown className="text-gray-500" />}
-                            </div>
-
-                            {expandedSection === 'medicineHistory' && (
-                                <div className="border-t border-gray-200 dark:border-gray-700">
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                            <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                                <tr>
-                                                    <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Date</th>
-                                                    <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Time</th>
-                                                    <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Action</th>
-                                                    <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Item</th>
-                                                    <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Quantity</th>
-                                                    <th className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Staff</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                                                {resourceData.medicines.history.map((entry, index) => (
-                                                    <tr key={index}>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{entry.date}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{entry.time}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{entry.action}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{entry.item}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${entry.quantity > 0 ? 'text-green-500' : 'text-red-500'}`}>{entry.quantity > 0 ? '+' : ''}{entry.quantity}</td>
-                                                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>{entry.staff}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            default:
-                return null;
-        }
-    };
-
-    return (
-        <div className={`p-6 transition-colors duration-200 ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}>
-            {/* Header + Actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                <div>
-                    <h1 className="text-2xl font-semibold">Resources</h1>
-                    <p className={`mt-1 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Manage beds, oxygen and medicine stocks in one place.</p>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                    <button onClick={handleRefresh} title="Refresh" className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${darkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
-                        <FiRefreshCw className="mr-2" /> Refresh
-                    </button>
-                    <button onClick={handleImport} title="Import" className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${darkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
-                        <FiUpload className="mr-2" /> Import
-                    </button>
-                    <button onClick={handleExport} title="Export" className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${darkMode ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>
-                        <FiDownload className="mr-2" /> Export
-                    </button>
-                    <button onClick={handleAddResource} title="Add" className="inline-flex items-center px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md text-sm font-medium">
-                        <FiPlus className="mr-2" /> Add
-                    </button>
-                </div>
-            </div>
-
-            {/* Tabs + Search */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center space-x-2">
-                    <button onClick={() => setActiveTab('beds')} className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'beds' ? 'bg-cyan-50 text-cyan-600' : darkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>Beds</button>
-                    <button onClick={() => setActiveTab('oxygen')} className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'oxygen' ? 'bg-cyan-50 text-cyan-600' : darkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>Oxygen</button>
-                    <button onClick={() => setActiveTab('medicines')} className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'medicines' ? 'bg-cyan-50 text-cyan-600' : darkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-50'}`}>Medicines</button>
-                </div>
-
-                <div className="flex items-center space-x-2 w-full sm:w-auto">
-                    <div className={`flex items-center w-full sm:w-80 border rounded-md px-2 py-1 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                        <FiSearch className={`text-gray-400 mr-2 ${darkMode ? 'text-gray-300' : ''}`} />
-                        <input
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder={`Search ${activeTab === 'beds' ? 'wards' : activeTab === 'oxygen' ? 'supplies' : 'medicines'}`}
-                            className={`w-full bg-transparent outline-none text-sm ${darkMode ? 'text-gray-100 placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'}`}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-6">
-                {isLoading ? (
-                    <div className="flex justify-center items-center py-24">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
-                    </div>
-                ) : (
-                    renderTabContent()
-                )}
-            </div>
-        </div>
+    const query = search.toLowerCase();
+    return collection.filter((item) =>
+      Object.values(item).some((value) => String(value).toLowerCase().includes(query))
     );
+  }, [collection, search]);
+
+  const summary = useMemo(() => {
+    if (!resources) {
+      return [];
+    }
+
+    const bedsTotal = resources.beds.reduce((sum, row) => sum + row.total, 0);
+    const bedsOccupied = resources.beds.reduce((sum, row) => sum + row.occupied, 0);
+    const oxygenCapacity = resources.oxygen.reduce((sum, row) => sum + row.capacity, 0);
+    const oxygenAvailable = resources.oxygen.reduce((sum, row) => sum + row.available, 0);
+    const medicinesLow = resources.medicines.filter((med) => med.stock <= med.threshold).length;
+
+    return [
+      { label: "Beds in system", value: bedsTotal },
+      { label: "Beds occupied", value: bedsOccupied },
+      { label: "Oxygen reserve", value: `${oxygenAvailable}/${oxygenCapacity} L` },
+      { label: "Low medicines", value: medicinesLow },
+    ];
+  }, [resources]);
+
+  const persist = (nextResources) => {
+    setResources(nextResources);
+    saveResources(nextResources, session.name);
+  };
+
+  const handleSave = (event) => {
+    event.preventDefault();
+
+    const validation = validateForm(activeTab, form);
+    if (validation) {
+      setError(validation);
+      return;
+    }
+
+    const item = buildItemFromForm(activeTab, form, editingId);
+    const nextCollection = editingId
+      ? collection.map((row) => (row.id === editingId ? item : row))
+      : [item, ...collection];
+
+    const nextResources = { ...resources, [activeTab]: nextCollection };
+    persist(nextResources);
+
+    setForm(buildEmptyForm(activeTab));
+    setEditingId(null);
+    setError("");
+    setShowForm(false);
+  };
+
+  const handleEdit = (item) => {
+    setEditingId(item.id);
+    setForm({ ...item });
+    setShowForm(true);
+    setError("");
+  };
+
+  const handleDelete = (id) => {
+    const nextCollection = collection.filter((row) => row.id !== id);
+    persist({ ...resources, [activeTab]: nextCollection });
+
+    if (editingId === id) {
+      setEditingId(null);
+      setForm(buildEmptyForm(activeTab));
+      setShowForm(false);
+      setError("");
+    }
+  };
+
+  const exportData = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      resources,
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `medradar-resources-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  if (!ready || !session || !resources) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow">Loading resource desk...</div>
+      </div>
+    );
+  }
+
+  return (
+    <PortalFrame
+      title="Resource Desk"
+      subtitle="Maintain live inventory for beds, oxygen, and medicines across the facility."
+      session={session}
+      rightSlot={
+        <button
+          type="button"
+          onClick={exportData}
+          className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
+        >
+          <Download className="h-4 w-4" />
+          Export JSON
+        </button>
+      }
+    >
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {summary.map((card) => (
+          <article key={card.label} className="rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-slate-500">{card.label}</p>
+            <p className="mt-2 text-2xl font-black text-slate-900">{card.value}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                  activeTab === tab.id
+                    ? "bg-gradient-to-r from-cyan-600 to-sky-600 text-white"
+                    : "border border-cyan-100 text-slate-700 hover:bg-cyan-50"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={`Search ${activeTab}`}
+              className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setShowForm((prev) => !prev);
+                setEditingId(null);
+                setForm(buildEmptyForm(activeTab));
+                setError("");
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 px-3 py-2 text-sm font-semibold text-white"
+            >
+              <Plus className="h-4 w-4" />
+              Add {activeTab.slice(0, -1)}
+            </button>
+          </div>
+        </div>
+
+        {showForm ? (
+          <form onSubmit={handleSave} className="mt-4 rounded-xl border border-cyan-100 bg-cyan-50/60 p-3">
+            {error ? <p className="mb-2 text-sm text-rose-700">{error}</p> : null}
+
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {activeTab === "beds" ? (
+                <>
+                  <input
+                    value={form.ward}
+                    onChange={(event) => setForm((prev) => ({ ...prev, ward: event.target.value }))}
+                    placeholder="Ward"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={form.total}
+                    onChange={(event) => setForm((prev) => ({ ...prev, total: event.target.value }))}
+                    placeholder="Total beds"
+                    type="number"
+                    min="0"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={form.occupied}
+                    onChange={(event) => setForm((prev) => ({ ...prev, occupied: event.target.value }))}
+                    placeholder="Occupied beds"
+                    type="number"
+                    min="0"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={form.lastUpdated}
+                    onChange={(event) => setForm((prev) => ({ ...prev, lastUpdated: event.target.value }))}
+                    placeholder="Updated at"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </>
+              ) : null}
+
+              {activeTab === "oxygen" ? (
+                <>
+                  <input
+                    value={form.source}
+                    onChange={(event) => setForm((prev) => ({ ...prev, source: event.target.value }))}
+                    placeholder="Source"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={form.capacity}
+                    onChange={(event) => setForm((prev) => ({ ...prev, capacity: event.target.value }))}
+                    placeholder="Capacity (L)"
+                    type="number"
+                    min="0"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={form.available}
+                    onChange={(event) => setForm((prev) => ({ ...prev, available: event.target.value }))}
+                    placeholder="Available (L)"
+                    type="number"
+                    min="0"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={form.flowRateLph}
+                    onChange={(event) => setForm((prev) => ({ ...prev, flowRateLph: event.target.value }))}
+                    placeholder="Flow L/hr"
+                    type="number"
+                    min="0"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </>
+              ) : null}
+
+              {activeTab === "medicines" ? (
+                <>
+                  <input
+                    value={form.name}
+                    onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                    placeholder="Medicine"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={form.stock}
+                    onChange={(event) => setForm((prev) => ({ ...prev, stock: event.target.value }))}
+                    placeholder="Stock"
+                    type="number"
+                    min="0"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={form.threshold}
+                    onChange={(event) => setForm((prev) => ({ ...prev, threshold: event.target.value }))}
+                    placeholder="Threshold"
+                    type="number"
+                    min="0"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={form.dailyUse}
+                    onChange={(event) => setForm((prev) => ({ ...prev, dailyUse: event.target.value }))}
+                    placeholder="Daily use"
+                    type="number"
+                    min="0"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </>
+              ) : null}
+            </div>
+
+            {activeTab === "medicines" ? (
+              <input
+                value={form.unit}
+                onChange={(event) => setForm((prev) => ({ ...prev, unit: event.target.value }))}
+                placeholder="Unit (vials, strips...)"
+                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+            ) : null}
+
+            {activeTab === "oxygen" ? (
+              <select
+                value={form.status}
+                onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
+                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              >
+                <option value="normal">Normal</option>
+                <option value="warning">Warning</option>
+                <option value="critical">Critical</option>
+              </select>
+            ) : null}
+
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+              >
+                <Save className="h-4 w-4" />
+                {editingId ? "Update" : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                  setForm(buildEmptyForm(activeTab));
+                  setError("");
+                }}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : null}
+
+        <div className="mt-4 overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                {activeTab === "beds" ? (
+                  <>
+                    <th className="px-2 py-2">Ward</th>
+                    <th className="px-2 py-2">Total</th>
+                    <th className="px-2 py-2">Occupied</th>
+                    <th className="px-2 py-2">Updated</th>
+                    <th className="px-2 py-2">Actions</th>
+                  </>
+                ) : null}
+
+                {activeTab === "oxygen" ? (
+                  <>
+                    <th className="px-2 py-2">Source</th>
+                    <th className="px-2 py-2">Capacity</th>
+                    <th className="px-2 py-2">Available</th>
+                    <th className="px-2 py-2">Flow L/hr</th>
+                    <th className="px-2 py-2">Status</th>
+                    <th className="px-2 py-2">Actions</th>
+                  </>
+                ) : null}
+
+                {activeTab === "medicines" ? (
+                  <>
+                    <th className="px-2 py-2">Name</th>
+                    <th className="px-2 py-2">Stock</th>
+                    <th className="px-2 py-2">Threshold</th>
+                    <th className="px-2 py-2">Daily use</th>
+                    <th className="px-2 py-2">Unit</th>
+                    <th className="px-2 py-2">Actions</th>
+                  </>
+                ) : null}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCollection.map((item) => (
+                <tr key={item.id} className="border-b border-slate-100 text-slate-700">
+                  {activeTab === "beds" ? (
+                    <>
+                      <td className="px-2 py-2 font-semibold text-slate-900">{item.ward}</td>
+                      <td className="px-2 py-2">{item.total}</td>
+                      <td className="px-2 py-2">{item.occupied}</td>
+                      <td className="px-2 py-2">{item.lastUpdated}</td>
+                    </>
+                  ) : null}
+
+                  {activeTab === "oxygen" ? (
+                    <>
+                      <td className="px-2 py-2 font-semibold text-slate-900">{item.source}</td>
+                      <td className="px-2 py-2">{item.capacity}</td>
+                      <td className="px-2 py-2">{item.available}</td>
+                      <td className="px-2 py-2">{item.flowRateLph}</td>
+                      <td className="px-2 py-2">
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                            item.status === "critical"
+                              ? "bg-rose-100 text-rose-700"
+                              : item.status === "warning"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                    </>
+                  ) : null}
+
+                  {activeTab === "medicines" ? (
+                    <>
+                      <td className="px-2 py-2 font-semibold text-slate-900">{item.name}</td>
+                      <td className="px-2 py-2">{item.stock}</td>
+                      <td className="px-2 py-2">{item.threshold}</td>
+                      <td className="px-2 py-2">{item.dailyUse}</td>
+                      <td className="px-2 py-2">{item.unit}</td>
+                    </>
+                  ) : null}
+
+                  <td className="px-2 py-2">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(item)}
+                        className="rounded-lg border border-cyan-200 px-2 py-1 text-xs font-semibold text-cyan-700"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(item.id)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2 py-1 text-xs font-semibold text-rose-700"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </PortalFrame>
+  );
 }
