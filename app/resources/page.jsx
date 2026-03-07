@@ -337,8 +337,8 @@ export default function ResourcesPage() {
 
   if (!ready || !session || !loaded || !resources) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow">Loading resource desk...</div>
+      <div className="frost-shell flex min-h-screen items-center justify-center">
+        <div className="frost-layer frost-glass rounded-xl px-4 py-3 text-sm font-semibold frost-subtitle">Loading resource desk...</div>
       </div>
     );
   }
@@ -353,7 +353,7 @@ export default function ResourcesPage() {
           <button
             type="button"
             onClick={handleManualRefresh}
-            className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
+            className="frost-btn-secondary"
           >
             <RefreshCw className="h-4 w-4" />
             Refresh
@@ -361,7 +361,7 @@ export default function ResourcesPage() {
           <button
             type="button"
             onClick={openImportPicker}
-            className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50 disabled:opacity-60"
+            className="frost-btn-secondary"
             disabled={!canImportSnapshot}
           >
             <Upload className="h-4 w-4" />
@@ -370,7 +370,7 @@ export default function ResourcesPage() {
           <button
             type="button"
             onClick={exportData}
-            className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-3 py-2 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
+            className="frost-btn-secondary"
           >
             <Download className="h-4 w-4" />
             Export JSON
@@ -385,7 +385,7 @@ export default function ResourcesPage() {
         </div>
       }
     >
-      <section className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+      <section className="frost-subtitle mb-3 flex flex-wrap items-center justify-between gap-2 text-xs">
         <p>Last sync at {lastSyncAt}</p>
         <p>
           Operator: {session.name} ({session.roleLabel || session.role})
@@ -393,17 +393,17 @@ export default function ResourcesPage() {
       </section>
 
       {!canEditActiveType ? (
-        <section className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+        <section className="frost-alert-warning mb-4">
           Your role is read-only for <span className="font-semibold">{activeTab}</span>. You can still view all inventory.
         </section>
       ) : null}
 
       {loadError || feedback ? (
         <section
-          className={`mb-4 flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+          className={`mb-4 flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${
             loadError || feedback?.type === "error"
-              ? "border-rose-200 bg-rose-50 text-rose-700"
-              : "border-emerald-200 bg-emerald-50 text-emerald-700"
+              ? "frost-alert-danger"
+              : "frost-alert-success"
           }`}
         >
           <AlertCircle className="h-4 w-4" />
@@ -413,14 +413,14 @@ export default function ResourcesPage() {
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map((card) => (
-          <article key={card.label} className="rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-slate-500">{card.label}</p>
-            <p className="mt-2 text-2xl font-black text-slate-900">{card.value}</p>
+          <article key={card.label} className="frost-card rounded-2xl p-4">
+            <p className="frost-subtitle text-xs uppercase tracking-wide">{card.label}</p>
+            <p className="frost-title mt-2 text-2xl font-black">{card.value}</p>
           </article>
         ))}
       </section>
 
-      <section className="mt-6 rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
+      <section className="frost-glass mt-6 rounded-2xl p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             {TABS.map((tab) => (
@@ -430,8 +430,8 @@ export default function ResourcesPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
                   activeTab === tab.id
-                    ? "bg-gradient-to-r from-cyan-600 to-sky-600 text-white"
-                    : "border border-cyan-100 text-slate-700 hover:bg-cyan-50"
+                    ? "frost-nav-link is-active"
+                    : "frost-nav-link"
                 }`}
               >
                 {tab.label}
@@ -444,7 +444,7 @@ export default function ResourcesPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={`Search ${activeTab}`}
-              className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+              className="frost-input"
             />
             <button
               type="button"
@@ -455,7 +455,7 @@ export default function ResourcesPage() {
                 setForm(buildEmptyForm(activeTab));
                 setError("");
               }}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="frost-btn-primary"
             >
               <Plus className="h-4 w-4" />
               Add {activeTab.slice(0, -1)}
@@ -464,8 +464,8 @@ export default function ResourcesPage() {
         </div>
 
         {showForm ? (
-          <form onSubmit={handleSave} className="mt-4 rounded-xl border border-cyan-100 bg-cyan-50/60 p-3">
-            {error ? <p className="mb-2 text-sm text-rose-700">{error}</p> : null}
+          <form onSubmit={handleSave} className="frost-card-soft mt-4 rounded-xl p-3">
+            {error ? <p className="frost-alert-danger mb-2 text-sm">{error}</p> : null}
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {activeTab === "beds" ? (
@@ -474,7 +474,7 @@ export default function ResourcesPage() {
                     value={form.ward}
                     onChange={(event) => setForm((prev) => ({ ...prev, ward: event.target.value }))}
                     placeholder="Ward"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                   <input
                     value={form.total}
@@ -482,7 +482,7 @@ export default function ResourcesPage() {
                     placeholder="Total beds"
                     type="number"
                     min="0"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                   <input
                     value={form.occupied}
@@ -490,13 +490,13 @@ export default function ResourcesPage() {
                     placeholder="Occupied beds"
                     type="number"
                     min="0"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                   <input
                     value={form.lastUpdated}
                     onChange={(event) => setForm((prev) => ({ ...prev, lastUpdated: event.target.value }))}
                     placeholder="Updated at"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                 </>
               ) : null}
@@ -507,7 +507,7 @@ export default function ResourcesPage() {
                     value={form.source}
                     onChange={(event) => setForm((prev) => ({ ...prev, source: event.target.value }))}
                     placeholder="Source"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                   <input
                     value={form.capacity}
@@ -515,7 +515,7 @@ export default function ResourcesPage() {
                     placeholder="Capacity (L)"
                     type="number"
                     min="0"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                   <input
                     value={form.available}
@@ -523,7 +523,7 @@ export default function ResourcesPage() {
                     placeholder="Available (L)"
                     type="number"
                     min="0"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                   <input
                     value={form.flowRateLph}
@@ -531,7 +531,7 @@ export default function ResourcesPage() {
                     placeholder="Flow L/hr"
                     type="number"
                     min="0"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                 </>
               ) : null}
@@ -542,7 +542,7 @@ export default function ResourcesPage() {
                     value={form.name}
                     onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
                     placeholder="Medicine"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                   <input
                     value={form.stock}
@@ -550,7 +550,7 @@ export default function ResourcesPage() {
                     placeholder="Stock"
                     type="number"
                     min="0"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                   <input
                     value={form.threshold}
@@ -558,7 +558,7 @@ export default function ResourcesPage() {
                     placeholder="Threshold"
                     type="number"
                     min="0"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                   <input
                     value={form.dailyUse}
@@ -566,7 +566,7 @@ export default function ResourcesPage() {
                     placeholder="Daily use"
                     type="number"
                     min="0"
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="frost-input rounded-lg"
                   />
                 </>
               ) : null}
@@ -577,7 +577,7 @@ export default function ResourcesPage() {
                 value={form.unit}
                 onChange={(event) => setForm((prev) => ({ ...prev, unit: event.target.value }))}
                 placeholder="Unit (vials, strips...)"
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="frost-input mt-2 w-full rounded-lg"
               />
             ) : null}
 
@@ -585,7 +585,7 @@ export default function ResourcesPage() {
               <select
                 value={form.status}
                 onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="frost-select mt-2 w-full rounded-lg"
               >
                 <option value="normal">Normal</option>
                 <option value="warning">Warning</option>
@@ -597,7 +597,7 @@ export default function ResourcesPage() {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="frost-btn-neutral"
               >
                 <Save className="h-4 w-4" />
                 {editingId ? "Update" : "Save"}
@@ -610,7 +610,7 @@ export default function ResourcesPage() {
                   setForm(buildEmptyForm(activeTab));
                   setError("");
                 }}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+                className="frost-btn-secondary"
               >
                 Cancel
               </button>
@@ -619,9 +619,9 @@ export default function ResourcesPage() {
         ) : null}
 
         <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
+          <table className="frost-table min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
                 {activeTab === "beds" ? (
                   <>
                     <th className="px-2 py-2">Ward</th>
@@ -662,7 +662,7 @@ export default function ResourcesPage() {
                 <tr>
                   <td
                     colSpan={activeTab === "medicines" ? 7 : activeTab === "oxygen" ? 6 : 6}
-                    className="px-2 py-6 text-center text-sm text-slate-500"
+                    className="frost-subtitle px-2 py-6 text-center text-sm"
                   >
                     No rows match the current search.
                   </td>
@@ -670,15 +670,15 @@ export default function ResourcesPage() {
               ) : null}
 
               {filteredCollection.map((item) => (
-                <tr key={item.id} className="border-b border-slate-100 text-slate-700">
+                <tr key={item.id}>
                   {activeTab === "beds" ? (
                     <>
-                      <td className="px-2 py-2 font-semibold text-slate-900">{item.ward}</td>
+                      <td className="px-2 py-2 font-semibold">{item.ward}</td>
                       <td className="px-2 py-2">{item.total}</td>
                       <td className="px-2 py-2">{item.occupied}</td>
                       <td className="px-2 py-2">
                         <span
-                          className={`rounded-full px-2 py-1 text-xs font-semibold ${utilizationBadge(
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide ${utilizationBadge(
                             Math.round((item.occupied / item.total) * 100)
                           )}`}
                         >
@@ -691,13 +691,13 @@ export default function ResourcesPage() {
 
                   {activeTab === "oxygen" ? (
                     <>
-                      <td className="px-2 py-2 font-semibold text-slate-900">{item.source}</td>
+                      <td className="px-2 py-2 font-semibold">{item.source}</td>
                       <td className="px-2 py-2">{item.capacity}</td>
                       <td className="px-2 py-2">{item.available}</td>
                       <td className="px-2 py-2">{item.flowRateLph}</td>
                       <td className="px-2 py-2">
                         <span
-                          className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-wide ${
                             item.status === "critical"
                               ? "bg-rose-100 text-rose-700"
                               : item.status === "warning"
@@ -713,7 +713,7 @@ export default function ResourcesPage() {
 
                   {activeTab === "medicines" ? (
                     <>
-                      <td className="px-2 py-2 font-semibold text-slate-900">{item.name}</td>
+                      <td className="px-2 py-2 font-semibold">{item.name}</td>
                       <td className="px-2 py-2">{item.stock}</td>
                       <td className="px-2 py-2">{item.threshold}</td>
                       <td className="px-2 py-2">{item.dailyUse}</td>
@@ -730,7 +730,7 @@ export default function ResourcesPage() {
                         type="button"
                         disabled={!canEditActiveType}
                         onClick={() => handleEdit(item)}
-                        className="rounded-lg border border-cyan-200 px-2 py-1 text-xs font-semibold text-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="frost-btn-secondary rounded-lg px-2 py-1 text-xs"
                       >
                         Edit
                       </button>
@@ -738,7 +738,7 @@ export default function ResourcesPage() {
                         type="button"
                         disabled={!canEditActiveType}
                         onClick={() => handleDelete(item.id)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-2 py-1 text-xs font-semibold text-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="frost-btn-danger rounded-lg px-2 py-1 text-xs"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                         Delete

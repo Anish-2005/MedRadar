@@ -89,8 +89,8 @@ export default function AdminPage() {
 
   if (!ready || !session || !loaded || !settings || !resources) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow">Loading admin panel...</div>
+      <div className="frost-shell flex min-h-screen items-center justify-center">
+        <div className="frost-layer frost-glass rounded-xl px-4 py-3 text-sm font-semibold frost-subtitle">Loading admin panel...</div>
       </div>
     );
   }
@@ -104,7 +104,7 @@ export default function AdminPage() {
         <button
           type="button"
           onClick={handleReset}
-          className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300"
+          className="frost-btn-danger"
         >
           <RotateCcw className="h-4 w-4" />
           Reset demo data
@@ -112,26 +112,26 @@ export default function AdminPage() {
       }
     >
       {error || actionError ? (
-        <section className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <section className="frost-alert-danger mb-4">
           {error || actionError}
         </section>
       ) : null}
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {quickStats.map((card) => (
-          <article key={card.label} className="rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-slate-500">{card.label}</p>
-            <p className="mt-2 text-2xl font-black text-slate-900">{card.value}</p>
+          <article key={card.label} className="frost-card rounded-2xl p-4">
+            <p className="frost-subtitle text-xs uppercase tracking-wide">{card.label}</p>
+            <p className="frost-title mt-2 text-2xl font-black">{card.value}</p>
           </article>
         ))}
       </section>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[1.1fr_1fr]">
-        <article className="rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
+        <article className="frost-glass rounded-2xl p-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-[var(--font-display)] text-lg font-bold text-slate-900">Threshold Configuration</h2>
+            <h2 className="frost-title font-[var(--font-display)] text-lg font-bold">Threshold Configuration</h2>
             {savedMessage ? (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+              <span className="frost-status-success inline-flex items-center gap-1">
                 <CheckCircle2 className="h-4 w-4" />
                 {savedMessage}
               </span>
@@ -140,17 +140,17 @@ export default function AdminPage() {
 
           <form onSubmit={handleSave} className="mt-4 space-y-3">
             {hasChanges ? (
-              <p className="text-xs font-semibold text-amber-700">You have unsaved changes.</p>
+              <p className="frost-alert-warning text-xs">You have unsaved changes.</p>
             ) : (
-              <p className="text-xs font-semibold text-emerald-700">All settings are synced.</p>
+              <p className="frost-alert-success text-xs">All settings are synced.</p>
             )}
 
             {hasInvalidSettings ? (
-              <p className="text-xs font-semibold text-rose-700">Threshold values are out of allowed range.</p>
+              <p className="frost-alert-danger text-xs">Threshold values are out of allowed range.</p>
             ) : null}
 
             <label className="block">
-              <span className="text-sm font-semibold text-slate-700">Bed occupancy alert (%)</span>
+              <span className="frost-title text-sm font-semibold">Bed occupancy alert (%)</span>
               <input
                 type="number"
                 min="1"
@@ -162,12 +162,12 @@ export default function AdminPage() {
                     bedOccupancyAlertPercent: Number(event.target.value),
                   }))
                 }
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                className="frost-input mt-1"
               />
             </label>
 
             <label className="block">
-              <span className="text-sm font-semibold text-slate-700">Oxygen reserve alert (%)</span>
+              <span className="frost-title text-sm font-semibold">Oxygen reserve alert (%)</span>
               <input
                 type="number"
                 min="1"
@@ -179,12 +179,12 @@ export default function AdminPage() {
                     oxygenReserveAlertPercent: Number(event.target.value),
                   }))
                 }
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                className="frost-input mt-1"
               />
             </label>
 
             <label className="block">
-              <span className="text-sm font-semibold text-slate-700">Medicine low-stock horizon (days)</span>
+              <span className="frost-title text-sm font-semibold">Medicine low-stock horizon (days)</span>
               <input
                 type="number"
                 min="1"
@@ -196,12 +196,12 @@ export default function AdminPage() {
                     medicineLowDays: Number(event.target.value),
                   }))
                 }
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                className="frost-input mt-1"
               />
             </label>
 
             <label className="block">
-              <span className="text-sm font-semibold text-slate-700">Shift lead</span>
+              <span className="frost-title text-sm font-semibold">Shift lead</span>
               <input
                 value={activeSettings.shiftLead}
                 onChange={(event) =>
@@ -210,12 +210,12 @@ export default function AdminPage() {
                     shiftLead: event.target.value,
                   }))
                 }
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                className="frost-input mt-1"
               />
             </label>
 
             <label className="block">
-              <span className="text-sm font-semibold text-slate-700">Escalation contact</span>
+              <span className="frost-title text-sm font-semibold">Escalation contact</span>
               <input
                 value={activeSettings.escalationContact}
                 onChange={(event) =>
@@ -224,7 +224,7 @@ export default function AdminPage() {
                     escalationContact: event.target.value,
                   }))
                 }
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                className="frost-input mt-1"
               />
             </label>
 
@@ -232,7 +232,7 @@ export default function AdminPage() {
               <button
                 type="submit"
                 disabled={!hasChanges || hasInvalidSettings}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 px-4 py-2 text-sm font-semibold text-white shadow disabled:cursor-not-allowed disabled:opacity-60"
+                className="frost-btn-primary"
               >
                 <Save className="h-4 w-4" />
                 Save settings
@@ -242,7 +242,7 @@ export default function AdminPage() {
                 type="button"
                 onClick={() => setDraftSettings(null)}
                 disabled={!hasChanges}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="frost-btn-secondary"
               >
                 Revert changes
               </button>
@@ -250,18 +250,18 @@ export default function AdminPage() {
           </form>
         </article>
 
-        <article className="rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
-          <h2 className="font-[var(--font-display)] text-lg font-bold text-slate-900">Audit Trail</h2>
-          <p className="mt-1 text-xs text-slate-500">Recent actions across login, inventory changes, and admin updates.</p>
+        <article className="frost-card rounded-2xl p-4">
+          <h2 className="frost-title font-[var(--font-display)] text-lg font-bold">Audit Trail</h2>
+          <p className="frost-subtitle mt-1 text-xs">Recent actions across login, inventory changes, and admin updates.</p>
 
           <div className="mt-4 max-h-[420px] space-y-2 overflow-auto pr-1">
             {audit.slice(0, 12).map((entry) => (
-              <div key={entry.id} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm">
-                <p className="font-semibold text-slate-900">{entry.action}</p>
-                <p className="text-xs text-slate-500">
+              <div key={entry.id} className="frost-card-soft rounded-xl px-3 py-2 text-sm">
+                <p className="frost-title font-semibold">{entry.action}</p>
+                <p className="frost-subtitle text-xs">
                   {entry.actor} on {entry.target}
                 </p>
-                <p className="text-xs text-slate-400">{entry.time}</p>
+                <p className="frost-subtitle text-xs opacity-80">{entry.time}</p>
               </div>
             ))}
           </div>
