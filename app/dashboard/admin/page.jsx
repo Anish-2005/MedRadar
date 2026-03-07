@@ -12,6 +12,19 @@ export default function AdminPage() {
   const { resources, settings, audit, loaded, refresh } = useMedRadarLiveData({ includeAudit: true });
   const [draftSettings, setDraftSettings] = useState(null);
   const [savedMessage, setSavedMessage] = useState("");
+  const activeSettings = draftSettings ?? settings;
+  const hasChanges =
+    settings && activeSettings
+      ? JSON.stringify(activeSettings) !== JSON.stringify(settings)
+      : false;
+  const hasInvalidSettings =
+    activeSettings &&
+    (activeSettings.bedOccupancyAlertPercent < 50 ||
+      activeSettings.bedOccupancyAlertPercent > 100 ||
+      activeSettings.oxygenReserveAlertPercent < 5 ||
+      activeSettings.oxygenReserveAlertPercent > 80 ||
+      activeSettings.medicineLowDays < 1 ||
+      activeSettings.medicineLowDays > 30);
 
   const quickStats = useMemo(() => {
     if (!resources) {
@@ -32,6 +45,9 @@ export default function AdminPage() {
 
   const handleSave = (event) => {
     event.preventDefault();
+    if (!hasChanges || hasInvalidSettings) {
+      return;
+    }
     saveSettings(draftSettings ?? settings, session.name);
     setDraftSettings(null);
     refresh();
@@ -93,13 +109,23 @@ export default function AdminPage() {
           </div>
 
           <form onSubmit={handleSave} className="mt-4 space-y-3">
+            {hasChanges ? (
+              <p className="text-xs font-semibold text-amber-700">You have unsaved changes.</p>
+            ) : (
+              <p className="text-xs font-semibold text-emerald-700">All settings are synced.</p>
+            )}
+
+            {hasInvalidSettings ? (
+              <p className="text-xs font-semibold text-rose-700">Threshold values are out of allowed range.</p>
+            ) : null}
+
             <label className="block">
               <span className="text-sm font-semibold text-slate-700">Bed occupancy alert (%)</span>
               <input
                 type="number"
                 min="1"
                 max="100"
-                value={(draftSettings ?? settings).bedOccupancyAlertPercent}
+                value={activeSettings.bedOccupancyAlertPercent}
                 onChange={(event) =>
                   setDraftSettings((prev) => ({
                     ...(prev ?? settings),
@@ -116,7 +142,7 @@ export default function AdminPage() {
                 type="number"
                 min="1"
                 max="100"
-                value={(draftSettings ?? settings).oxygenReserveAlertPercent}
+                value={activeSettings.oxygenReserveAlertPercent}
                 onChange={(event) =>
                   setDraftSettings((prev) => ({
                     ...(prev ?? settings),
@@ -133,7 +159,7 @@ export default function AdminPage() {
                 type="number"
                 min="1"
                 max="30"
-                value={(draftSettings ?? settings).medicineLowDays}
+                value={activeSettings.medicineLowDays}
                 onChange={(event) =>
                   setDraftSettings((prev) => ({
                     ...(prev ?? settings),
@@ -147,7 +173,7 @@ export default function AdminPage() {
             <label className="block">
               <span className="text-sm font-semibold text-slate-700">Shift lead</span>
               <input
-                value={(draftSettings ?? settings).shiftLead}
+                value={activeSettings.shiftLead}
                 onChange={(event) =>
                   setDraftSettings((prev) => ({
                     ...(prev ?? settings),
@@ -161,7 +187,7 @@ export default function AdminPage() {
             <label className="block">
               <span className="text-sm font-semibold text-slate-700">Escalation contact</span>
               <input
-                value={(draftSettings ?? settings).escalationContact}
+                value={activeSettings.escalationContact}
                 onChange={(event) =>
                   setDraftSettings((prev) => ({
                     ...(prev ?? settings),
@@ -172,13 +198,25 @@ export default function AdminPage() {
               />
             </label>
 
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 px-4 py-2 text-sm font-semibold text-white shadow"
-            >
-              <Save className="h-4 w-4" />
-              Save settings
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="submit"
+                disabled={!hasChanges || hasInvalidSettings}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-sky-600 px-4 py-2 text-sm font-semibold text-white shadow disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Save className="h-4 w-4" />
+                Save settings
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDraftSettings(null)}
+                disabled={!hasChanges}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Revert changes
+              </button>
+            </div>
           </form>
         </article>
 

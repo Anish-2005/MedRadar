@@ -6,8 +6,10 @@ import {
   AlertTriangle,
   ArrowRight,
   Bed,
+  ClipboardList,
   Droplets,
   Package2,
+  ShieldAlert,
   TrendingUp,
 } from "lucide-react";
 import {
@@ -23,7 +25,6 @@ import {
 } from "recharts";
 import PortalFrame from "@/components/portal-frame";
 import { DEFAULT_FORECAST } from "@/lib/medradarData";
-import {
 import { useRequireSession } from "@/lib/useRequireSession";
 import { useMedRadarLiveData } from "@/lib/useMedRadarLiveData";
 
@@ -100,6 +101,95 @@ export default function DashboardPage() {
 
     return list;
   }, [metrics, resources, settings]);
+
+  const operationalChecklist = useMemo(() => {
+    if (!resources || !settings || !metrics) {
+      return [];
+    }
+
+    const items = [];
+
+    const overloadedWards = resources.beds.filter(
+      (ward) => percent(ward.occupied, ward.total) >= settings.bedOccupancyAlertPercent
+    );
+    if (overloadedWards.length) {
+      items.push({
+        id: "beds",
+        level: "critical",
+        text: `Escalate discharge and triage on ${overloadedWards.length} ward(s) crossing occupancy threshold.`,
+      });
+    } else {
+      items.push({
+        id: "beds-ok",
+        level: "stable",
+        text: "Bed occupancy is below alert threshold across all wards.",
+      });
+    }
+
+    if (metrics.oxygenReservePercent <= settings.oxygenReserveAlertPercent + 10) {
+      items.push({
+        id: "oxygen",
+        level: "warning",
+        text: "Prepare oxygen replenishment for next shift handover to avoid reserve dips.",
+      });
+    } else {
+      items.push({
+        id: "oxygen-ok",
+        level: "stable",
+        text: "Oxygen reserve is in acceptable range for current demand.",
+      });
+    }
+
+    const medicineShortlist = resources.medicines.filter(
+      (med) => med.dailyUse > 0 && med.stock / med.dailyUse <= settings.medicineLowDays
+    );
+    if (medicineShortlist.length) {
+      items.push({
+        id: "meds",
+        level: "warning",
+        text: `Fast-track procurement for ${medicineShortlist.length} medicine(s) with short runway.`,
+      });
+    } else {
+      items.push({
+        id: "meds-ok",
+        level: "stable",
+        text: "No medicine is below configured runway threshold.",
+      });
+    }
+
+    return items;
+  }, [metrics, resources, settings]);
+
+  const dataQuality = useMemo(() => {
+    if (!resources) {
+      return [];
+    }
+
+    const bedsWithoutUpdate = resources.beds.filter((row) => !row.lastUpdated || row.lastUpdated === "--:--").length;
+    const oxygenWithoutFlow = resources.oxygen.filter((row) => row.flowRateLph <= 0).length;
+    const medicinesWithoutUsage = resources.medicines.filter((row) => row.dailyUse <= 0).length;
+
+    return [
+      {
+        id: "beds-updated",
+        label: "Wards missing update time",
+        value: bedsWithoutUpdate,
+        healthy: bedsWithoutUpdate === 0,
+      },
+      {
+        id: "oxygen-flow",
+        label: "Oxygen sources with zero flow",
+        value: oxygenWithoutFlow,
+        healthy: oxygenWithoutFlow === 0,
+      },
+      {
+        id: "med-usage",
+        label: "Medicines without usage baseline",
+        value: medicinesWithoutUsage,
+        healthy: medicinesWithoutUsage === 0,
+      },
+    ];
+  }, [resources]);
 
   if (!ready || !session || !loaded || !resources || !settings || !metrics) {
     return (
@@ -213,6 +303,54 @@ export default function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </article>
+      </section>
+
+      <section className="mt-6 grid gap-4 xl:grid-cols-2">
+        <article className="rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-cyan-700" />
+            <h2 className="font-[var(--font-display)] text-lg font-bold text-slate-900">Shift Action Checklist</h2>
+          </div>
+          <ul className="mt-3 space-y-2 text-sm">
+            {operationalChecklist.map((item) => (
+              <li key={item.id} className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                <span
+                  className={`mr-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    item.level === "critical"
+                      ? "bg-rose-100 text-rose-700"
+                      : item.level === "warning"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-emerald-100 text-emerald-700"
+                  }`}
+                >
+                  {item.level}
+                </span>
+                <span className="text-slate-700">{item.text}</span>
+              </li>
+            ))}
+          </ul>
+        </article>
+
+        <article className="rounded-2xl border border-cyan-100 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5 text-cyan-700" />
+            <h2 className="font-[var(--font-display)] text-lg font-bold text-slate-900">Data Quality Monitor</h2>
+          </div>
+          <ul className="mt-3 space-y-2 text-sm">
+            {dataQuality.map((check) => (
+              <li key={check.id} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                <span className="text-slate-700">{check.label}</span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    check.healthy ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                  }`}
+                >
+                  {check.value}
+                </span>
+              </li>
+            ))}
+          </ul>
         </article>
       </section>
 
