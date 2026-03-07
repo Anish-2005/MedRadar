@@ -6,23 +6,22 @@
       <stop offset="100%" stop-color="#BCDFFF" />
     </linearGradient>
     <linearGradient id="tile" x1="132" y1="110" x2="330" y2="330" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#DDF2FF" />
-      <stop offset="45%" stop-color="#67B0EB" />
-      <stop offset="100%" stop-color="#0A3968" />
+      <stop offset="0%" stop-color="#0B3D70" />
+      <stop offset="100%" stop-color="#1A5B95" />
     </linearGradient>
-    <linearGradient id="crystal" x1="170" y1="140" x2="274" y2="274" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9" />
-      <stop offset="100%" stop-color="#BFE4FF" stop-opacity="0.2" />
+    <linearGradient id="ring" x1="175" y1="145" x2="285" y2="285" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#C6E8FF" stop-opacity="0.08" />
     </linearGradient>
   </defs>
 
   <rect width="1200" height="630" fill="url(#bg)" />
   <rect x="70" y="70" width="1060" height="490" rx="36" fill="white" fill-opacity="0.68" />
   <rect x="130" y="120" width="200" height="200" rx="48" fill="url(#tile)" />
-  <path d="M230 142L278 180L256 262H204L182 180L230 142Z" fill="url(#crystal)" />
-  <path d="M186 187L230 158L274 187" stroke="#ECF8FF" stroke-width="5" stroke-linecap="round" stroke-opacity="0.8" />
-  <path d="M210 197H225V182H235V197H250V207H235V222H225V207H210V197Z" fill="#F7FDFF" />
-  <path d="M159 248H182L196 225L217 264L239 233L250 248H301" stroke="#F7FDFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="230" cy="220" r="56" stroke="url(#ring)" stroke-width="8" />
+  <path d="M173 248H191L205 205L226 239L243 189L261 248H287" stroke="#F3FCFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M230 156V176M220 166H240" stroke="#F3FCFF" stroke-width="7" stroke-linecap="round" />
+  <circle cx="281" cy="171" r="4.5" fill="#F3FCFF" fill-opacity="0.8" />
 
   <text x="372" y="220" fill="#0E213B" font-size="82" font-family="Segoe UI, Arial, sans-serif" font-weight="800">
     MedRadar
@@ -31,7 +30,7 @@
     Hospital Resource Optimizer
   </text>
   <text x="372" y="360" fill="#3F678D" font-size="30" font-family="Segoe UI, Arial, sans-serif">
-    Beds · Oxygen · Medicine Continuity in one command center
+    Beds | Oxygen | Medicine Continuity in one command center
   </text>
   <text x="372" y="420" fill="#3F678D" font-size="30" font-family="Segoe UI, Arial, sans-serif">
     Built for operations teams, duty doctors, and pharmacy leads

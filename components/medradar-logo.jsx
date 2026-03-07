@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export function MedRadarMark({ className, title = "MedRadar logo" }) {
   const gradientId = useId().replace(/:/g, "");
-  const crystalId = `${gradientId}-crystal`;
+  const ringId = `${gradientId}-ring`;
 
   return (
     <svg
@@ -16,23 +16,26 @@ export function MedRadarMark({ className, title = "MedRadar logo" }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <linearGradient id={gradientId} x1="7" y1="6" x2="57" y2="59" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#DDF2FF" />
-          <stop offset="45%" stopColor="#67B0EB" />
-          <stop offset="100%" stopColor="#0A3968" />
+        <linearGradient id={gradientId} x1="10" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#0B3D70" />
+          <stop offset="100%" stopColor="#1A5B95" />
         </linearGradient>
-        <linearGradient id={crystalId} x1="17" y1="12" x2="43" y2="45" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#BFE4FF" stopOpacity="0.18" />
+        <linearGradient id={ringId} x1="21" y1="17" x2="43" y2="44" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#C6E8FF" stopOpacity="0.08" />
         </linearGradient>
       </defs>
-      <rect x="4" y="4" width="56" height="56" rx="16" fill={`url(#${gradientId})`} />
-      <path d="M32 10L47 22L41 45H23L17 22L32 10Z" fill={`url(#${crystalId})`} />
-      <path d="M19 24L32 15L45 24" stroke="#ECF8FF" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.75" />
-      <path d="M26 27H31V22H33V27H38V29H33V34H31V29H26V27Z" fill="#F7FDFF" />
-      <path d="M13 41H20L24 34L30 45L36 36L39 41H51" stroke="#F7FDFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="46.5" cy="15.5" r="1.4" fill="#F4FCFF" />
-      <circle cx="50.5" cy="20.5" r="0.95" fill="#E2F5FF" />
+      <rect x="4" y="4" width="56" height="56" rx="15" fill={`url(#${gradientId})`} />
+      <circle cx="32" cy="32" r="16" stroke={`url(#${ringId})`} strokeWidth="2" />
+      <path
+        d="M16 40H21L25 28L31 38L36 22L42 40H48"
+        stroke="#F3FCFF"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M32 14V20M29 17H35" stroke="#F3FCFF" strokeWidth="2.4" strokeLinecap="round" />
+      <circle cx="46.5" cy="18" r="1.3" fill="#F3FCFF" opacity="0.8" />
     </svg>
   );
 }

@@ -25,6 +25,13 @@
   "resources": {
     "beds": [
       {
+        "id": "bed-1772901609210",
+        "ward": "3",
+        "total": 23,
+        "occupied": 1,
+        "lastUpdated": "22:09"
+      },
+      {
         "id": "bed-1",
         "ward": "General Ward A",
         "total": 40,
@@ -137,6 +144,15 @@
     "escalationContact": "+91 91000 11001"
   },
   "audit": [
+    {
+      "id": "audit-a396fedd-1877-4dba-a1bd-391e1658b1e0",
+      "actor": "Dr. Asha Mehta",
+      "action": "Resources updated",
+      "target": "Inventory / beds",
+      "severity": "info",
+      "createdAt": "2026-03-07T16:40:10.066Z",
+      "time": "22:10"
+    },
     {
       "id": "audit-b8e18bde-0805-4e1a-a92b-93d37b182f48",
       "actor": "Dr. Asha Mehta",
