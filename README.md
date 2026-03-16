@@ -218,30 +218,16 @@ MedRadar/
 
 ## 🤝 Contributing
 
-We welcome contributions from the healthcare technology community! Here's how you can help:
+We welcome contributions from the healthcare technology community! Whether you're fixing bugs, adding features, or improving documentation, your help is appreciated.
 
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```powershell
-   git checkout -b feature/amazing-feature
-   ```
-3. **Commit your changes**
-   ```powershell
-   git commit -m 'Add some amazing feature'
-   ```
-4. **Push to the branch**
-   ```powershell
-   git push origin feature/amazing-feature
-   ```
-5. **Open a Pull Request**
+Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
-### 🎯 Areas for Contribution
-- Backend API development
-- Machine learning models
-- IoT integration
-- Mobile app development
-- Documentation and testing
-- UI/UX improvements
+### 🎯 Quick Start for Contributors
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add some amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
 ## 🔐 Security & Privacy
 
